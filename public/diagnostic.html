@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 高德API系统诊断 - 智游助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1rem; }
+        
+        .content { padding: 30px; }
+        .test-section { 
+            margin: 30px 0; 
+            padding: 25px; 
+            border: 2px solid #f0f0f0; 
+            border-radius: 12px; 
+            transition: all 0.3s ease;
+        }
+        .test-section:hover { border-color: #667eea; transform: translateY(-2px); }
+        .test-section h2 { color: #333; margin-bottom: 15px; font-size: 1.5rem; }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-healthy { background: #d4edda; color: #155724; }
+        .status-degraded { background: #fff3cd; color: #856404; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .diagnostic-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .diagnostic-card h3 { color: #333; margin-bottom: 10px; }
+        .diagnostic-card .detail { margin: 8px 0; font-size: 0.95rem; }
+        .diagnostic-card .detail strong { color: #555; }
+        
+        .recommendations {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .recommendations h3 { color: #1976d2; margin-bottom: 15px; }
+        .recommendations ul { padding-left: 20px; }
+        .recommendations li { margin: 8px 0; color: #333; }
+        
+        .next-steps {
+            background: #f3e5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .next-steps h3 { color: #7b1fa2; margin-bottom: 15px; }
+        .next-steps ol { padding-left: 20px; }
+        .next-steps li { margin: 8px 0; color: #333; }
+        
+        button { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px; 
+            white-space: pre-wrap; 
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error { background: #ffe6e6; color: #d00; border-left: 4px solid #d00; }
+        .success { background: #e6ffe6; color: #080; border-left: 4px solid #080; }
+        .warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 高德API系统诊断</h1>
+            <p>全面检测API配置、网络连接、请求格式和降级机制</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section">
+                <h2>🎯 诊断配置</h2>
+                <div class="input-group">
+                    <label for="destination">测试目的地：</label>
+                    <input type="text" id="destination" value="哈尔滨" placeholder="输入要测试的城市名称">
+                </div>
+                <button onclick="runFullDiagnostic()" id="diagnosticBtn">
+                    开始全面诊断
+                </button>
+                <button onclick="runQuickTest()" id="quickBtn">
+                    快速连接测试
+                </button>
+            </div>
+
+            <div id="diagnostic-results" style="display: none;">
+                <div class="test-section">
+                    <h2>📊 诊断结果 <span id="overall-status" class="status-indicator"></span></h2>
+                    <div id="diagnostic-grid" class="diagnostic-grid"></div>
+                </div>
+
+                <div id="recommendations-section" class="recommendations" style="display: none;">
+                    <h3>💡 优化建议</h3>
+                    <ul id="recommendations-list"></ul>
+                </div>
+
+                <div id="next-steps-section" class="next-steps" style="display: none;">
+                    <h3>🚀 下一步行动</h3>
+                    <ol id="next-steps-list"></ol>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>📋 诊断日志</h2>
+                <div id="diagnostic-log" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let diagnosticLog = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            diagnosticLog += logEntry;
+            
+            const logElement = document.getElementById('diagnostic-log');
+            logElement.textContent = diagnosticLog;
+            logElement.className = `result ${type}`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        async function runFullDiagnostic() {
+            const btn = document.getElementById('diagnosticBtn');
+            const destination = document.getElementById('destination').value || '哈尔滨';
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>正在诊断...';
+            
+            log('🔍 开始全面诊断高德API...', 'info');
+            log(`📍 测试目的地: ${destination}`, 'info');
+
+            try {
+                const response = await fetch('/api/diagnostic/amap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destination }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    log('✅ 诊断完成', 'success');
+                    displayDiagnosticResults(data.diagnostic);
+                } else {
+                    log(`❌ 诊断失败: ${data.error}`, 'error');
+                    if (data.diagnostic) {
+                        displayDiagnosticResults(data.diagnostic);
+                    }
+                }
+            } catch (error) {
+                log(`❌ 诊断请求失败: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '开始全面诊断';
+            }
+        }
+
+        async function runQuickTest() {
+            const btn = document.getElementById('quickBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>测试中...';
+            
+            log('⚡ 开始快速连接测试...', 'info');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch('https://restapi.amap.com/v3', {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(5000),
+                });
+                const duration = Date.now() - startTime;
+                
+                if (response.ok) {
+                    log(`✅ 网络连接正常 (${duration}ms)`, 'success');
+                } else {
+                    log(`⚠️ 网络连接异常 (状态码: ${response.status})`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ 网络连接失败: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '快速连接测试';
+            }
+        }
+
+        function displayDiagnosticResults(diagnostic) {
+            document.getElementById('diagnostic-results').style.display = 'block';
+            
+            // 显示整体状态
+            const statusElement = document.getElementById('overall-status');
+            statusElement.textContent = diagnostic.overallStatus.toUpperCase();
+            statusElement.className = `status-indicator status-${diagnostic.overallStatus}`;
+            
+            // 显示详细诊断结果
+            const grid = document.getElementById('diagnostic-grid');
+            grid.innerHTML = `
+                <div class="diagnostic-card">
+                    <h3>🔧 API配置</h3>
+                    <div class="detail"><strong>密钥状态:</strong> ${diagnostic.apiConfig.keyStatus}</div>
+                    <div class="detail"><strong>密钥来源:</strong> ${diagnostic.apiConfig.keySource}</div>
+                    <div class="detail"><strong>密钥(脱敏):</strong> ${diagnostic.apiConfig.keyMasked}</div>
+                    <div class="detail"><strong>超时设置:</strong> ${diagnostic.apiConfig.timeout}ms</div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <h3>📝 请求格式</h3>
+                    <div class="detail"><strong>URL构建:</strong> ${diagnostic.requestFormat.urlConstruction}</div>
+                    <div class="detail"><strong>参数验证:</strong> ${diagnostic.requestFormat.parameterValidation}</div>
+                    <div class="detail"><strong>示例URL:</strong> <small>${diagnostic.requestFormat.sampleUrl}</small></div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <h3>🌐 网络连接</h3>
+                    <div class="detail"><strong>DNS解析:</strong> ${diagnostic.networkConnectivity.dnsResolution}</div>
+                    <div class="detail"><strong>HTTP连接:</strong> ${diagnostic.networkConnectivity.httpConnection}</div>
+                    <div class="detail"><strong>响应时间:</strong> ${diagnostic.networkConnectivity.responseTime}ms</div>
+                    ${diagnostic.networkConnectivity.statusCode ? `<div class="detail"><strong>状态码:</strong> ${diagnostic.networkConnectivity.statusCode}</div>` : ''}
+                </div>
+                
+                <div class="diagnostic-card">
+                    <h3>⚙️ 代码逻辑</h3>
+                    <div class="detail"><strong>错误处理:</strong> ${diagnostic.codeLogic.errorHandling}</div>
+                    <div class="detail"><strong>超时设置:</strong> ${diagnostic.codeLogic.timeoutSettings}</div>
+                    <div class="detail"><strong>重试机制:</strong> ${diagnostic.codeLogic.retryMechanism}</div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <h3>🧪 实际请求</h3>
+                    <div class="detail"><strong>端点:</strong> ${diagnostic.actualRequest.endpoint}</div>
+                    <div class="detail"><strong>耗时:</strong> ${diagnostic.actualRequest.duration}ms</div>
+                    ${diagnostic.actualRequest.error ? 
+                        `<div class="detail" style="color: #d32f2f;"><strong>错误:</strong> ${diagnostic.actualRequest.error}</div>` :
+                        '<div class="detail" style="color: #388e3c;"><strong>状态:</strong> 请求成功</div>'
+                    }
+                </div>
+                
+                <div class="diagnostic-card">
+                    <h3>🛡️ 降级机制</h3>
+                    <div class="detail"><strong>状态:</strong> ${diagnostic.fallbackMechanism.status}</div>
+                    <div class="detail"><strong>测试结果:</strong> ${diagnostic.fallbackMechanism.testResult}</div>
+                </div>
+            `;
+            
+            // 显示建议
+            if (diagnostic.recommendations.length > 0) {
+                document.getElementById('recommendations-section').style.display = 'block';
+                const list = document.getElementById('recommendations-list');
+                list.innerHTML = diagnostic.recommendations.map(rec => `<li>${rec}</li>`).join('');
+            }
+            
+            // 显示下一步
+            if (diagnostic.nextSteps.length > 0) {
+                document.getElementById('next-steps-section').style.display = 'block';
+                const list = document.getElementById('next-steps-list');
+                list.innerHTML = diagnostic.nextSteps.map(step => `<li>${step}</li>`).join('');
+            }
+        }
+
+        // 页面加载时的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 高德API诊断系统已就绪', 'success');
+            log('💡 提示: 点击"开始全面诊断"进行完整检测', 'info');
+        });
+    </script>
+</body>
+</html>

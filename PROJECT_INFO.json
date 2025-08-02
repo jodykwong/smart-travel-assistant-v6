@@ -1,0 +1,40 @@
+{
+  "name": "智游助手v5.0",
+  "version": "5.0.0",
+  "description": "AI驱动的智能旅行规划平台",
+  "packageDate": "2025-08-01T23:16:32.595Z",
+  "packageBy": "技术合伙人 (CTO)",
+  "quickStart": {
+    "1. 安装依赖": "npm install",
+    "2. 配置环境": "cp .env.example .env.local (然后编辑API密钥)",
+    "3. 启动开发": "npm run dev",
+    "4. 访问应用": "http://localhost:3001"
+  },
+  "requiredApiKeys": [
+    "AMAP_MCP_API_KEY - 高德地图MCP API密钥",
+    "OPENAI_API_KEY - OpenAI API密钥"
+  ],
+  "documentation": [
+    "README.md - 项目概述",
+    "PROJECT_HANDOVER_v5.0.md - 完整交接文档",
+    "DEPLOYMENT_GUIDE_v5.0.md - 部署指南",
+    "API_DOCUMENTATION_v5.0.md - API文档",
+    "KNOWN_ISSUES_v5.0.md - 已知问题",
+    "ARCHITECTURE_ANALYSIS_CTO.md - 架构分析"
+  ],
+  "technicalStack": {
+    "frontend": "React 18 + Next.js 14 + TypeScript",
+    "backend": "Next.js API Routes + LangGraph",
+    "database": "SQLite (开发) / PostgreSQL (生产)",
+    "ai": "OpenAI GPT-4 + LangGraph",
+    "maps": "高德地图MCP",
+    "styling": "Tailwind CSS + Framer Motion",
+    "testing": "Vitest + Playwright"
+  },
+  "systemRequirements": {
+    "nodejs": ">= 18.0.0",
+    "npm": ">= 9.0.0",
+    "memory": ">= 2GB RAM",
+    "storage": ">= 5GB"
+  }
+}

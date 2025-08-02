@@ -1,0 +1,26 @@
+{
+  "testSuite": "智游助手v6.0全自动测试套件",
+  "executionTime": "2025-08-02T08:42:36.616Z",
+  "configuration": {
+    "testTimeout": 1800000,
+    "maxRetries": 2,
+    "outputDir": "./test-results",
+    "browsers": [
+      "chromium"
+    ],
+    "headless": true,
+    "parallel": false
+  },
+  "summary": {
+    "status": "COMPLETED",
+    "totalDuration": 0,
+    "artifactsGenerated": 5
+  },
+  "artifacts": [
+    "artifacts",
+    "reports",
+    "screenshots",
+    "traces",
+    "videos"
+  ]
+}

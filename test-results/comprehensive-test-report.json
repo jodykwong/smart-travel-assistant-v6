@@ -1,0 +1,65 @@
+{
+  "testSuite": "智游助手v6.0全自动测试套件",
+  "timestamp": "2025-08-02T08:43:03.762Z",
+  "summary": {
+    "totalTests": 2,
+    "passedTests": 0,
+    "failedTests": 2,
+    "skippedTests": 0,
+    "successRate": 0,
+    "totalDuration": 0
+  },
+  "modules": {
+    "environment": {
+      "timestamp": "2025-08-02T08:43:02.057Z",
+      "tests": {
+        "testScripts": {
+          "simple_test.py": {
+            "exists": true,
+            "executable": true,
+            "output": ""
+          },
+          "test_deepseek_connection.py": {
+            "exists": true,
+            "executable": false,
+            "error": "Command failed: python3 /Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6/smart-travel-assistant-v6.0/test_deepseek_connection.py\nTraceback (most recent call last):\n  File \"/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6/smart-travel-assistant-v6.0/test_deepseek_connection.py\", line 11, in <module>\n    from dotenv import load_dotenv\nModuleNotFoundError: No module named 'dotenv'\n"
+          }
+        },
+        "notebookFiles": {
+          "01_langgraph_architecture.ipynb": {
+            "exists": true,
+            "valid": true,
+            "cells": 18,
+            "metadata": true
+          },
+          "02_amap_integration.ipynb": {
+            "exists": true,
+            "valid": true,
+            "cells": 14,
+            "metadata": true
+          },
+          "03_intelligent_planning.ipynb": {
+            "exists": true,
+            "valid": true,
+            "cells": 12,
+            "metadata": true
+          },
+          "04_complete_integration_test.ipynb": {
+            "exists": true,
+            "valid": true,
+            "cells": 8,
+            "metadata": true
+          }
+        }
+      }
+    }
+  },
+  "overallHealth": "poor",
+  "recommendations": [
+    "测试成功率需要提升，请检查失败的测试用例"
+  ],
+  "nextActions": [
+    "修复失败的测试用例",
+    "重新运行测试套件"
+  ]
+}

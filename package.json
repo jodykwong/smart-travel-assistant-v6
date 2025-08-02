@@ -1,0 +1,119 @@
+{
+  "name": "smart-travel-assistant-v6",
+  "version": "6.0.0",
+  "description": "Enterprise-grade AI travel planning system with multi-layer caching, real-time progress tracking, and commercial deployment readiness",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "test:e2e": "node run-e2e-tests.js",
+    "test:e2e:headed": "HEADLESS=false node run-e2e-tests.js",
+    "test:playwright": "playwright test --config=tests/e2e/playwright.config.ts",
+    "test:playwright:ui": "playwright test --config=tests/e2e/playwright.config.ts --ui",
+    "test:playwright:debug": "playwright test --config=tests/e2e/playwright.config.ts --debug",
+    "test:environment": "python3 simple_test.py",
+    "test:api": "python3 test_deepseek_connection.py",
+    "test:notebooks": "jupyter nbconvert --execute --to notebook 01_langgraph_architecture.ipynb 02_amap_integration.ipynb 03_intelligent_planning.ipynb 04_complete_integration_test.ipynb",
+    "test:coverage": "vitest --coverage",
+    "playwright:install": "playwright install",
+    "playwright:install-deps": "playwright install-deps",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.3.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/ioredis": "^4.28.10",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.0",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.2.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "dotenv": "^17.2.1",
+    "framer-motion": "^10.16.0",
+    "html2canvas": "^1.4.1",
+    "ioredis": "^5.7.0",
+    "jspdf": "^3.0.1",
+    "lucide-react": "^0.290.0",
+    "next": "^14.0.0",
+    "postcss": "^8.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.47.0",
+    "react-hot-toast": "^2.4.0",
+    "socket.io-client": "^4.7.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.0.0",
+    "zod": "^3.22.0",
+    "zustand": "^4.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/testing-library__jest-dom": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.1.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "husky": "^8.0.0",
+    "jsdom": "^22.1.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0",
+    "prettier-plugin-tailwindcss": "^0.5.0",
+    "vitest": "^0.34.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/smart-travel-assistant-v6.git"
+  },
+  "keywords": [
+    "ai",
+    "travel",
+    "planning",
+    "langraph",
+    "deepseek",
+    "next.js",
+    "typescript",
+    "redis",
+    "caching",
+    "enterprise"
+  ],
+  "author": {
+    "name": "Smart Travel Team",
+    "email": "dev@smart-travel.ai",
+    "url": "https://smart-travel.ai"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-org/smart-travel-assistant-v6/issues"
+  },
+  "homepage": "https://smart-travel.ai"
+}

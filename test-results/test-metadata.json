@@ -1,0 +1,15 @@
+{
+  "testSuite": "智游助手v6.0全自动测试套件",
+  "version": "1.0.0",
+  "timestamp": "2025-08-02T08:43:03.773Z",
+  "environment": {
+    "nodeVersion": "v22.16.0",
+    "platform": "darwin",
+    "arch": "x64"
+  },
+  "configuration": {
+    "baseUrl": "http://localhost:3000",
+    "testTimeout": 300000,
+    "retries": 1
+  }
+}
