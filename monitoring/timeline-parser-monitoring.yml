@@ -1,0 +1,263 @@
+# 时间线解析器监控配置
+# 用于生产环境的监控告警和仪表板配置
+
+# 监控指标定义
+metrics:
+  # 业务指标
+  business:
+    parse_success_rate:
+      name: "解析成功率"
+      description: "时间线解析成功的请求比例"
+      type: "percentage"
+      target: 99.5
+      warning_threshold: 98.0
+      critical_threshold: 95.0
+      query: "sum(rate(timeline_parse_success_total[5m])) / sum(rate(timeline_parse_total[5m])) * 100"
+      
+    avg_parse_time:
+      name: "平均解析时间"
+      description: "时间线解析的平均响应时间"
+      type: "milliseconds"
+      target: 100
+      warning_threshold: 150
+      critical_threshold: 200
+      query: "histogram_quantile(0.5, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+      
+    parse_accuracy:
+      name: "解析准确性"
+      description: "解析结果的准确性评分"
+      type: "percentage"
+      target: 99.0
+      warning_threshold: 97.0
+      critical_threshold: 95.0
+      query: "avg(timeline_parse_accuracy_score)"
+
+  # 技术指标
+  technical:
+    response_time_p95:
+      name: "95分位响应时间"
+      description: "95%的请求在此时间内完成"
+      type: "milliseconds"
+      target: 100
+      warning_threshold: 200
+      critical_threshold: 500
+      query: "histogram_quantile(0.95, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+      
+    memory_usage:
+      name: "内存使用率"
+      description: "解析器进程的内存使用率"
+      type: "percentage"
+      target: 60
+      warning_threshold: 70
+      critical_threshold: 85
+      query: "process_resident_memory_bytes / node_memory_MemTotal_bytes * 100"
+      
+    cpu_usage:
+      name: "CPU使用率"
+      description: "解析器进程的CPU使用率"
+      type: "percentage"
+      target: 50
+      warning_threshold: 70
+      critical_threshold: 85
+      query: "rate(process_cpu_seconds_total[5m]) * 100"
+      
+    error_rate:
+      name: "错误率"
+      description: "5xx错误的比例"
+      type: "percentage"
+      target: 0.01
+      warning_threshold: 0.1
+      critical_threshold: 1.0
+      query: "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100"
+
+# 告警规则
+alerts:
+  - name: "timeline_parser_success_rate_low"
+    condition: "parse_success_rate < 95"
+    severity: "critical"
+    duration: "5m"
+    description: "时间线解析成功率过低"
+    notification_channels: ["email", "slack", "sms"]
+    runbook_url: "https://docs.company.com/runbooks/timeline-parser-low-success-rate"
+    
+  - name: "timeline_parser_response_time_high"
+    condition: "avg_parse_time > 200"
+    severity: "warning"
+    duration: "10m"
+    description: "时间线解析响应时间过长"
+    notification_channels: ["email", "slack"]
+    
+  - name: "timeline_parser_error_rate_high"
+    condition: "error_rate > 0.1"
+    severity: "critical"
+    duration: "3m"
+    description: "时间线解析错误率过高"
+    notification_channels: ["email", "slack", "sms"]
+    
+  - name: "timeline_parser_memory_usage_high"
+    condition: "memory_usage > 85"
+    severity: "warning"
+    duration: "15m"
+    description: "时间线解析器内存使用率过高"
+    notification_channels: ["email"]
+    
+  - name: "timeline_parser_cpu_usage_high"
+    condition: "cpu_usage > 85"
+    severity: "warning"
+    duration: "10m"
+    description: "时间线解析器CPU使用率过高"
+    notification_channels: ["email"]
+
+# 仪表板配置
+dashboards:
+  timeline_parser_overview:
+    title: "时间线解析器概览"
+    refresh_interval: "30s"
+    panels:
+      - title: "解析成功率"
+        type: "stat"
+        targets:
+          - expr: "sum(rate(timeline_parse_success_total[5m])) / sum(rate(timeline_parse_total[5m])) * 100"
+        thresholds:
+          - color: "red"
+            value: 95
+          - color: "yellow"
+            value: 98
+          - color: "green"
+            value: 99.5
+            
+      - title: "平均解析时间"
+        type: "stat"
+        targets:
+          - expr: "histogram_quantile(0.5, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+        unit: "ms"
+        thresholds:
+          - color: "green"
+            value: 100
+          - color: "yellow"
+            value: 150
+          - color: "red"
+            value: 200
+            
+      - title: "请求量趋势"
+        type: "graph"
+        targets:
+          - expr: "sum(rate(timeline_parse_total[5m]))"
+            legend: "总请求量"
+          - expr: "sum(rate(timeline_parse_success_total[5m]))"
+            legend: "成功请求量"
+          - expr: "sum(rate(timeline_parse_error_total[5m]))"
+            legend: "失败请求量"
+            
+      - title: "响应时间分布"
+        type: "heatmap"
+        targets:
+          - expr: "rate(timeline_parse_duration_seconds_bucket[5m])"
+            
+      - title: "解析器选择分布"
+        type: "pie"
+        targets:
+          - expr: "sum by (parser_type) (rate(timeline_parse_total[5m]))"
+            
+      - title: "错误类型分布"
+        type: "table"
+        targets:
+          - expr: "sum by (error_type) (rate(timeline_parse_error_total[5m]))"
+
+  timeline_parser_performance:
+    title: "时间线解析器性能"
+    refresh_interval: "10s"
+    panels:
+      - title: "响应时间百分位"
+        type: "graph"
+        targets:
+          - expr: "histogram_quantile(0.50, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+            legend: "P50"
+          - expr: "histogram_quantile(0.95, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+            legend: "P95"
+          - expr: "histogram_quantile(0.99, rate(timeline_parse_duration_seconds_bucket[5m])) * 1000"
+            legend: "P99"
+            
+      - title: "系统资源使用"
+        type: "graph"
+        targets:
+          - expr: "process_resident_memory_bytes / 1024 / 1024"
+            legend: "内存使用(MB)"
+          - expr: "rate(process_cpu_seconds_total[5m]) * 100"
+            legend: "CPU使用率(%)"
+            
+      - title: "并发处理能力"
+        type: "graph"
+        targets:
+          - expr: "sum(timeline_parse_concurrent_requests)"
+            legend: "并发请求数"
+          - expr: "sum(timeline_parse_queue_size)"
+            legend: "队列长度"
+
+# 通知渠道配置
+notification_channels:
+  email:
+    type: "email"
+    settings:
+      addresses: ["dev-team@company.com", "ops-team@company.com"]
+      subject_template: "[ALERT] 时间线解析器 - {{ .GroupLabels.alertname }}"
+      
+  slack:
+    type: "slack"
+    settings:
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#alerts-timeline-parser"
+      username: "Timeline Parser Monitor"
+      title_template: "时间线解析器告警"
+      
+  sms:
+    type: "webhook"
+    settings:
+      url: "${SMS_WEBHOOK_URL}"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+
+# 健康检查配置
+health_checks:
+  - name: "timeline_parser_basic"
+    endpoint: "/api/health/timeline-parser"
+    interval: "30s"
+    timeout: "5s"
+    expected_status: 200
+    
+  - name: "timeline_parser_functional"
+    endpoint: "/api/health/timeline-parser/functional"
+    interval: "60s"
+    timeout: "10s"
+    expected_status: 200
+    body_contains: "success"
+
+# 日志监控配置
+log_monitoring:
+  error_patterns:
+    - pattern: "ERROR.*timeline.*parse"
+      severity: "error"
+      alert_threshold: 10  # 10个错误/分钟
+      
+    - pattern: "WARN.*timeline.*performance"
+      severity: "warning"
+      alert_threshold: 50  # 50个警告/分钟
+      
+    - pattern: "FATAL.*timeline"
+      severity: "critical"
+      alert_threshold: 1   # 1个致命错误立即告警
+
+# SLA定义
+sla:
+  availability:
+    target: 99.9
+    measurement_window: "30d"
+    
+  performance:
+    response_time_p95: 200  # ms
+    measurement_window: "24h"
+    
+  accuracy:
+    parse_success_rate: 99.5  # %
+    measurement_window: "24h"
