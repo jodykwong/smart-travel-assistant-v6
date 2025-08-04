@@ -52,7 +52,7 @@ describe('RobustTimelineParser', () => {
       const result = await parser.parse(randomContent, context);
 
       expect(result.success).toBe(true);
-      expect(result.warnings).toContain('使用了兜底解析器，结果可能不够准确');
+      expect(result.warnings).toContain('未能识别标准时间格式，使用兜底解析');
       expect(result.data!.length).toBeGreaterThan(0);
     });
   });

@@ -32,6 +32,30 @@ metrics:
       critical_threshold: 95.0
       query: "avg(timeline_parse_accuracy_score)"
 
+    cache_hit_rate:
+      name: "缓存命中率"
+      description: "解析器缓存的命中率"
+      type: "percentage"
+      target: 80.0
+      warning_threshold: 60.0
+      critical_threshold: 40.0
+      query: "sum(rate(timeline_parse_cache_hits[5m])) / sum(rate(timeline_parse_requests[5m])) * 100"
+
+    parser_selection_distribution:
+      name: "解析器选择分布"
+      description: "不同解析器的使用分布"
+      type: "distribution"
+      query: "sum by (parser_type) (rate(timeline_parse_total[5m]))"
+
+    user_satisfaction_score:
+      name: "用户满意度评分"
+      description: "基于用户反馈的满意度评分"
+      type: "score"
+      target: 4.5
+      warning_threshold: 4.0
+      critical_threshold: 3.5
+      query: "avg(timeline_parse_user_rating)"
+
   # 技术指标
   technical:
     response_time_p95:
@@ -70,6 +94,33 @@ metrics:
       critical_threshold: 1.0
       query: "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100"
 
+    cache_memory_usage:
+      name: "缓存内存使用"
+      description: "解析器缓存占用的内存"
+      type: "megabytes"
+      target: 50
+      warning_threshold: 100
+      critical_threshold: 200
+      query: "timeline_parse_cache_memory_bytes / 1024 / 1024"
+
+    parser_queue_length:
+      name: "解析器队列长度"
+      description: "等待解析的请求队列长度"
+      type: "count"
+      target: 0
+      warning_threshold: 10
+      critical_threshold: 50
+      query: "timeline_parse_queue_size"
+
+    fallback_usage_rate:
+      name: "兜底解析器使用率"
+      description: "使用兜底解析器的请求比例"
+      type: "percentage"
+      target: 5.0
+      warning_threshold: 15.0
+      critical_threshold: 30.0
+      query: "sum(rate(timeline_parse_total{parser_type=\"FallbackTimelineParser\"}[5m])) / sum(rate(timeline_parse_total[5m])) * 100"
+
 # 告警规则
 alerts:
   - name: "timeline_parser_success_rate_low"
@@ -107,6 +158,34 @@ alerts:
     duration: "10m"
     description: "时间线解析器CPU使用率过高"
     notification_channels: ["email"]
+
+  - name: "timeline_parser_cache_hit_rate_low"
+    condition: "cache_hit_rate < 40"
+    severity: "warning"
+    duration: "15m"
+    description: "缓存命中率过低，可能影响性能"
+    notification_channels: ["email", "slack"]
+
+  - name: "timeline_parser_fallback_usage_high"
+    condition: "fallback_usage_rate > 30"
+    severity: "critical"
+    duration: "5m"
+    description: "兜底解析器使用率过高，主解析器可能有问题"
+    notification_channels: ["email", "slack", "sms"]
+
+  - name: "timeline_parser_user_satisfaction_low"
+    condition: "user_satisfaction_score < 3.5"
+    severity: "warning"
+    duration: "30m"
+    description: "用户满意度评分过低"
+    notification_channels: ["email", "slack"]
+
+  - name: "timeline_parser_queue_length_high"
+    condition: "parser_queue_length > 50"
+    severity: "critical"
+    duration: "2m"
+    description: "解析器队列积压严重"
+    notification_channels: ["email", "slack", "sms"]
 
 # 仪表板配置
 dashboards:
@@ -163,6 +242,24 @@ dashboards:
         type: "table"
         targets:
           - expr: "sum by (error_type) (rate(timeline_parse_error_total[5m]))"
+
+      - title: "缓存性能指标"
+        type: "graph"
+        targets:
+          - expr: "sum(rate(timeline_parse_cache_hits[5m]))"
+            legend: "缓存命中"
+          - expr: "sum(rate(timeline_parse_cache_misses[5m]))"
+            legend: "缓存未命中"
+          - expr: "timeline_parse_cache_memory_bytes / 1024 / 1024"
+            legend: "缓存内存使用(MB)"
+
+      - title: "用户体验指标"
+        type: "stat"
+        targets:
+          - expr: "avg(timeline_parse_user_rating)"
+            legend: "用户满意度"
+          - expr: "sum(rate(timeline_parse_user_feedback_total[5m]))"
+            legend: "用户反馈数量"
 
   timeline_parser_performance:
     title: "时间线解析器性能"

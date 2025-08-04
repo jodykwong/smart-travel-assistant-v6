@@ -232,7 +232,7 @@ describe('时间线解析器性能测试', () => {
     it('PERF-008: 解析器选择策略的效率', async () => {
       const testCases = [
         { content: REAL_LLM_RESPONSES.CHENGDU_DAY1, expectedParser: 'TimelineActivityParser' },
-        { content: REAL_LLM_RESPONSES.STRUCTURED_TIME, expectedParser: 'StructuredTimelineParser' },
+        { content: REAL_LLM_RESPONSES.STRUCTURED_TIME, expectedParser: 'TimelineActivityParser' },
         { content: REAL_LLM_RESPONSES.NO_TIME_MARKERS, expectedParser: 'FallbackTimelineParser' }
       ];
 

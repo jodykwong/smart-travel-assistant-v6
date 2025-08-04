@@ -3,6 +3,7 @@
  * 验证新解析器与现有系统的集成稳定性
  */
 
+import { vi } from 'vitest';
 import { TimelineParsingService } from '@/services/parsers';
 import { REAL_LLM_RESPONSES } from '@/services/parsers/__tests__/test-utils';
 
@@ -150,7 +151,7 @@ describe('时间线解析器集成测试', () => {
   describe('错误处理集成测试', () => {
     it('TC-INT-008: 应该优雅处理解析错误', async () => {
       const service = new TimelineParsingService();
-      
+
       const errorCases = [
         { input: '', description: '空内容' },
         { input: null, description: 'null内容' },
@@ -160,19 +161,267 @@ describe('时间线解析器集成测试', () => {
 
       for (const testCase of errorCases) {
         const result = await service.parseTimeline(
-          testCase.input as any, 
+          testCase.input as any,
           { destination: '测试城市' }
         );
 
         // 即使输入有问题，也应该有合理的响应
         expect(result).toBeDefined();
         expect(typeof result.success).toBe('boolean');
-        
+
         if (!result.success) {
           expect(Array.isArray(result.errors)).toBe(true);
           expect(result.errors.length).toBeGreaterThan(0);
         }
       }
+    });
+
+    it('TC-INT-009: parseActivitiesWithNewService网络错误处理', async () => {
+      // 模拟网络错误场景
+      const originalConsoleError = console.error;
+      const mockConsoleError = vi.fn();
+      console.error = mockConsoleError;
+
+      try {
+        // 模拟TimelineParsingService抛出异常
+        const mockService = {
+          parseTimeline: vi.fn().mockRejectedValue(new Error('网络连接失败'))
+        };
+
+        // 这里我们需要测试前端的parseActivitiesWithNewService函数
+        // 由于它在result.tsx中，我们创建一个模拟版本来测试错误处理逻辑
+        const parseActivitiesWithNewService = async (dayContent: string, destination: string) => {
+          try {
+            const result = await mockService.parseTimeline(dayContent, { destination });
+
+            if (result.success && result.data) {
+              return result.data;
+            } else {
+              console.warn('⚠️ 新解析器失败，使用兜底方案:', result.errors);
+              return generateSimpleFallbackActivities(dayContent, destination);
+            }
+          } catch (error) {
+            console.error('❌ 解析器异常:', error);
+            return generateSimpleFallbackActivities(dayContent, destination);
+          }
+        };
+
+        const generateSimpleFallbackActivities = (content: string, destination: string) => {
+          const periods = ['上午', '下午', '晚上'];
+          return periods.map((period, index) => ({
+            time: period === '上午' ? '09:00-12:00' : period === '下午' ? '14:00-17:00' : '19:00-21:00',
+            period,
+            title: `${destination}${period}活动`,
+            description: `探索${destination}的${period}时光`,
+            icon: '📍',
+            cost: 100 + index * 50,
+            duration: '约2-3小时',
+            color: period === '上午' ? 'bg-blue-100' : period === '下午' ? 'bg-green-100' : 'bg-purple-100'
+          }));
+        };
+
+        const result = await parseActivitiesWithNewService('测试内容', '北京');
+
+        // 验证错误处理
+        expect(mockConsoleError).toHaveBeenCalledWith('❌ 解析器异常:', expect.any(Error));
+        expect(result).toHaveLength(3); // 兜底活动
+        expect(result[0].title).toBe('北京上午活动');
+        expect(result[1].title).toBe('北京下午活动');
+        expect(result[2].title).toBe('北京晚上活动');
+
+      } finally {
+        console.error = originalConsoleError;
+      }
+    });
+
+    it('TC-INT-010: parseActivitiesWithNewService解析失败处理', async () => {
+      const originalConsoleWarn = console.warn;
+      const mockConsoleWarn = vi.fn();
+      console.warn = mockConsoleWarn;
+
+      try {
+        // 模拟解析失败但不抛异常的情况
+        const mockService = {
+          parseTimeline: vi.fn().mockResolvedValue({
+            success: false,
+            errors: ['解析格式不支持', '内容格式异常'],
+            data: null
+          })
+        };
+
+        const parseActivitiesWithNewService = async (dayContent: string, destination: string) => {
+          try {
+            const result = await mockService.parseTimeline(dayContent, { destination });
+
+            if (result.success && result.data) {
+              return result.data;
+            } else {
+              console.warn('⚠️ 新解析器失败，使用兜底方案:', result.errors);
+              return generateSimpleFallbackActivities(dayContent, destination);
+            }
+          } catch (error) {
+            console.error('❌ 解析器异常:', error);
+            return generateSimpleFallbackActivities(dayContent, destination);
+          }
+        };
+
+        const generateSimpleFallbackActivities = (content: string, destination: string) => {
+          const periods = ['上午', '下午', '晚上'];
+          return periods.map((period, index) => ({
+            time: period === '上午' ? '09:00-12:00' : period === '下午' ? '14:00-17:00' : '19:00-21:00',
+            period,
+            title: `${destination}${period}活动`,
+            description: `探索${destination}的${period}时光`,
+            icon: '📍',
+            cost: 100 + index * 50,
+            duration: '约2-3小时',
+            color: period === '上午' ? 'bg-blue-100' : period === '下午' ? 'bg-green-100' : 'bg-purple-100'
+          }));
+        };
+
+        const result = await parseActivitiesWithNewService('无效格式内容', '上海');
+
+        // 验证警告处理
+        expect(mockConsoleWarn).toHaveBeenCalledWith(
+          '⚠️ 新解析器失败，使用兜底方案:',
+          ['解析格式不支持', '内容格式异常']
+        );
+        expect(result).toHaveLength(3); // 兜底活动
+        expect(result[0].title).toBe('上海上午活动');
+
+      } finally {
+        console.warn = originalConsoleWarn;
+      }
+    });
+
+    it('TC-INT-011: parseActivitiesWithNewService数据格式异常处理', async () => {
+      // 测试解析成功但数据格式异常的情况
+      const mockService = {
+        parseTimeline: vi.fn().mockResolvedValue({
+          success: true,
+          data: null // 数据为null的异常情况
+        })
+      };
+
+      const parseActivitiesWithNewService = async (dayContent: string, destination: string) => {
+        try {
+          const result = await mockService.parseTimeline(dayContent, { destination });
+
+          if (result.success && result.data) {
+            return result.data;
+          } else {
+            console.warn('⚠️ 新解析器失败，使用兜底方案:', result.errors);
+            return generateSimpleFallbackActivities(dayContent, destination);
+          }
+        } catch (error) {
+          console.error('❌ 解析器异常:', error);
+          return generateSimpleFallbackActivities(dayContent, destination);
+        }
+      };
+
+      const generateSimpleFallbackActivities = (content: string, destination: string) => {
+        const periods = ['上午', '下午', '晚上'];
+        return periods.map((period, index) => ({
+          time: period === '上午' ? '09:00-12:00' : period === '下午' ? '14:00-17:00' : '19:00-21:00',
+          period,
+          title: `${destination}${period}活动`,
+          description: `探索${destination}的${period}时光`,
+          icon: '📍',
+          cost: 100 + index * 50,
+          duration: '约2-3小时',
+          color: period === '上午' ? 'bg-blue-100' : period === '下午' ? 'bg-green-100' : 'bg-purple-100'
+        }));
+      };
+
+      const result = await parseActivitiesWithNewService('正常内容', '深圳');
+
+      // 验证数据异常时的兜底处理
+      expect(result).toHaveLength(3);
+      expect(result[0].title).toBe('深圳上午活动');
+      expect(result[0].description).toBe('探索深圳的上午时光');
+    });
+  });
+
+  describe('缓存功能测试', () => {
+    it('TC-INT-012: 应该正确缓存解析结果', async () => {
+      const service = new TimelineParsingService();
+      const testContent = REAL_LLM_RESPONSES.CHENGDU_DAY1;
+      const context = { destination: '成都' };
+
+      // 清空缓存
+      service.clearCache();
+
+      // 第一次解析
+      const result1 = await service.parseTimeline(testContent, context);
+      expect(result1.success).toBe(true);
+
+      // 第二次解析应该使用缓存
+      const result2 = await service.parseTimeline(testContent, context);
+      expect(result2.success).toBe(true);
+      expect(result2.warnings).toContain('使用了缓存结果');
+
+      // 验证结果一致
+      expect(result1.data?.length).toBe(result2.data?.length);
+    });
+
+    it('TC-INT-013: 缓存键应该考虑内容和上下文', async () => {
+      const service = new TimelineParsingService();
+      service.clearCache();
+
+      // 相同内容，不同目的地
+      const content = REAL_LLM_RESPONSES.BEIJING_DAY1;
+      const result1 = await service.parseTimeline(content, { destination: '北京' });
+      const result2 = await service.parseTimeline(content, { destination: '上海' });
+
+      // 应该是不同的结果（不同的缓存键）
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+      expect(result2.warnings).not.toContain('使用了缓存结果');
+    });
+
+    it('TC-INT-014: 缓存管理功能测试', async () => {
+      const service = new TimelineParsingService();
+
+      // 清空缓存
+      service.clearCache();
+      expect(service.getCacheStats().size).toBe(0);
+
+      // 添加一些缓存条目
+      await service.parseTimeline(REAL_LLM_RESPONSES.CHENGDU_DAY1, { destination: '成都' });
+      await service.parseTimeline(REAL_LLM_RESPONSES.BEIJING_DAY1, { destination: '北京' });
+
+      const stats = service.getCacheStats();
+      expect(stats.size).toBe(2);
+      expect(stats.maxSize).toBe(100);
+
+      // 清理缓存
+      service.cleanupCache();
+      // 由于条目是新的，不应该被清理
+      expect(service.getCacheStats().size).toBe(2);
+
+      // 清空缓存
+      service.clearCache();
+      expect(service.getCacheStats().size).toBe(0);
+    });
+
+    it('TC-INT-015: 缓存预热功能测试', async () => {
+      const service = new TimelineParsingService();
+      service.clearCache();
+
+      const commonContents = [
+        { content: REAL_LLM_RESPONSES.CHENGDU_DAY1, context: { destination: '成都' } },
+        { content: REAL_LLM_RESPONSES.BEIJING_DAY1, context: { destination: '北京' } }
+      ];
+
+      // 预热缓存
+      await service.warmupCache(commonContents);
+
+      // 验证缓存已填充
+      expect(service.getCacheStats().size).toBe(2);
+
+      // 验证预热的内容可以从缓存获取
+      const result = await service.parseTimeline(REAL_LLM_RESPONSES.CHENGDU_DAY1, { destination: '成都' });
+      expect(result.warnings).toContain('使用了缓存结果');
     });
   });
 });

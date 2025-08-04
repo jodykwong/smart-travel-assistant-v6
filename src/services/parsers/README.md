@@ -43,8 +43,7 @@ src/services/parsers/
 ### 1. 多策略解析
 
 - **TimelineActivityParser** (优先级: 100)：处理原有的复杂解析逻辑
-- **MarkdownTimelineParser** (优先级: 90)：专门处理Markdown格式
-- **StructuredTimelineParser** (优先级: 80)：处理结构化时间格式
+- **TimelineActivityParser** (优先级: 100)：处理所有标准格式（包括Markdown和结构化时间）
 - **FallbackTimelineParser** (优先级: 10)：兜底解析器
 
 ### 2. 容错机制

@@ -7,124 +7,95 @@ import { TimelineActivity, ParsingContext } from '@/types/timeline-activity';
 import { ParseResult } from '@/types/parse-result';
 import { TimelineParser } from './timeline-parser-interface';
 import { TimelineActivityParser } from './timeline-activity-parser';
-import { MarkdownTimelineParser } from './markdown-timeline-parser';
-import { StructuredTimelineParser } from './structured-timeline-parser';
 import { FallbackTimelineParser } from './fallback-timeline-parser';
 
 export class RobustTimelineParser {
   private parsers: TimelineParser[];
 
   constructor() {
-    // 按优先级排序的解析器列表
+    // 简化的解析器列表 - 移除冗余的解析器
     this.parsers = [
-      new TimelineActivityParser(),      // 优先级 100
-      new MarkdownTimelineParser(),      // 优先级 90
-      new StructuredTimelineParser(),    // 优先级 80
-      new FallbackTimelineParser()       // 优先级 10 (兜底)
+      new TimelineActivityParser(),      // 优先级 100 - 处理所有标准格式
+      new FallbackTimelineParser()       // 优先级 10 - 兜底处理
     ].sort((a, b) => b.getPriority() - a.getPriority());
   }
 
   /**
-   * 解析时间线活动，自动选择最佳解析器
+   * 简化的解析方法 - 直接使用主解析器，失败时使用兜底
    */
   async parse(content: string, context: ParsingContext): Promise<ParseResult<TimelineActivity[]>> {
     const startTime = Date.now();
 
-    // 输入验证 - 处理null/undefined情况
-    if (!content) {
-      console.warn('⚠️ 输入内容为null或undefined，返回紧急兜底数据');
-      const emergencyData = this.generateEmergencyFallback(context);
-      return ParseResult.failure(['输入内容为空'], emergencyData);
+    // 输入验证
+    if (!content || content.trim().length === 0) {
+      console.warn('⚠️ 输入内容为空，返回兜底数据');
+      const fallbackData = this.generateEmergencyFallback(context);
+      return ParseResult.failure(['输入内容为空'], fallbackData);
     }
 
-    console.log(`🚀 [RobustTimelineParser] 开始解析，内容长度: ${content.length}`);
-
-    if (content.trim().length === 0) {
-      console.warn('⚠️ 输入内容为空，返回空结果');
-      return ParseResult.failure(['输入内容为空'], []);
-    }
-
+    // 上下文验证
     if (!context || !context.destination) {
       console.warn('⚠️ 解析上下文不完整，使用默认值');
       context = { destination: '未知目的地', ...context };
     }
 
-    let bestResult: ParseResult<TimelineActivity[]> | null = null;
-    let bestParser: TimelineParser | null = null;
-    const attemptResults: Array<{ parser: string; success: boolean; error?: string }> = [];
+    console.log(`🚀 [RobustTimelineParser] 开始解析，内容长度: ${content.length}`);
 
-    // 尝试每个解析器
-    for (const parser of this.parsers) {
-      try {
-        console.log(`🔍 尝试解析器: ${parser.getName()}`);
+    try {
+      // 首先尝试主解析器
+      const mainParser = this.parsers[0]; // TimelineActivityParser
+      console.log(`🔍 使用主解析器: ${mainParser.getName()}`);
 
-        // 检查解析器是否能处理该内容
-        if (!parser.canHandle(content)) {
-          console.log(`⏭️ ${parser.getName()} 无法处理该内容格式，跳过`);
-          attemptResults.push({ parser: parser.getName(), success: false, error: '不支持该内容格式' });
-          continue;
+      const result = mainParser.parse(content, context);
+
+      if (result.success && result.data && result.data.length > 0) {
+        const duration = Date.now() - startTime;
+        console.log(`✅ 主解析器成功，找到 ${result.data.length} 个活动，耗时: ${duration}ms`);
+
+        // 添加性能警告
+        const warnings = [...(result.warnings || [])];
+        if (duration > 100) {
+          warnings.push(`解析耗时较长: ${duration}ms`);
         }
 
-        // 执行解析
-        const result = parser.parse(content, context);
-        attemptResults.push({ parser: parser.getName(), success: result.success });
-
-        if (result.success && result.data && result.data.length > 0) {
-          console.log(`✅ ${parser.getName()} 解析成功，找到 ${result.data.length} 个活动`);
-          bestResult = result;
-          bestParser = parser;
-          break; // 找到成功的解析器就停止
-        } else {
-          console.log(`❌ ${parser.getName()} 解析失败或无结果:`, result.errors);
-        }
-
-      } catch (error) {
-        console.error(`💥 ${parser.getName()} 解析时发生异常:`, error);
-        attemptResults.push({ parser: parser.getName(), success: false, error: error.message });
-        
-        // 如果不是兜底解析器，继续尝试下一个
-        if (parser.getName() !== 'FallbackTimelineParser') {
-          continue;
-        }
+        return ParseResult.success(result.data, warnings);
+      } else {
+        console.log(`⚠️ 主解析器失败，尝试兜底解析器:`, result.errors);
       }
+    } catch (error) {
+      console.error(`💥 主解析器异常:`, error);
     }
 
-    const endTime = Date.now();
-    const duration = endTime - startTime;
+    try {
+      // 使用兜底解析器
+      const fallbackParser = this.parsers[1]; // FallbackTimelineParser
+      console.log(`🔍 使用兜底解析器: ${fallbackParser.getName()}`);
 
-    // 记录解析结果
-    console.log(`📊 解析完成，耗时: ${duration}ms`);
-    console.log('📋 解析器尝试结果:', attemptResults);
+      const result = fallbackParser.parse(content, context);
+      const duration = Date.now() - startTime;
 
-    if (bestResult && bestResult.success) {
-      console.log(`🎉 最终使用解析器: ${bestParser?.getName()}`);
-      
-      // 添加性能和解析器信息到警告中
-      const performanceWarnings = [];
-      if (duration > 100) {
-        performanceWarnings.push(`解析耗时较长: ${duration}ms`);
+      if (result.success && result.data) {
+        console.log(`✅ 兜底解析器成功，找到 ${result.data.length} 个活动，耗时: ${duration}ms`);
+
+        const warnings = [...(result.warnings || []), '使用了兜底解析器'];
+        if (duration > 100) {
+          warnings.push(`解析耗时较长: ${duration}ms`);
+        }
+
+        return ParseResult.success(result.data, warnings);
       }
-      if (bestParser?.getName() === 'FallbackTimelineParser') {
-        performanceWarnings.push('使用了兜底解析器，结果可能不够准确');
-      }
-
-      if (performanceWarnings.length > 0) {
-        const updatedWarnings = [...(bestResult.warnings || []), ...performanceWarnings];
-        return ParseResult.successWithWarnings(bestResult.data!, updatedWarnings);
-      }
-
-      return bestResult;
+    } catch (error) {
+      console.error(`💥 兜底解析器也失败了:`, error);
     }
 
-    // 所有解析器都失败了
-    console.error('💀 所有解析器都失败了，返回错误结果');
-    const allErrors = attemptResults
-      .filter(r => !r.success && r.error)
-      .map(r => `${r.parser}: ${r.error}`);
+    // 所有解析器都失败，返回紧急兜底数据
+    console.error('💥 所有解析器都失败，返回紧急兜底数据');
+    const emergencyData = this.generateEmergencyFallback(context);
+    const duration = Date.now() - startTime;
 
     return ParseResult.failure(
-      ['所有解析器都失败了', ...allErrors],
-      this.generateEmergencyFallback(context)
+      ['主解析器和兜底解析器都失败', `总耗时: ${duration}ms`],
+      emergencyData
     );
   }
 
