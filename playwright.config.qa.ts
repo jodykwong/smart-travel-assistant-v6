@@ -16,7 +16,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 4,
   
   // 报告器
   reporter: [
@@ -98,12 +98,14 @@ export default defineConfig({
   ],
   
   // Web服务器配置（用于本地测试）
-  webServer: process.env.CI ? undefined : {
-    command: 'npm run dev',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  ...(process.env.CI ? {} : {
+    webServer: {
+      command: 'npm run dev',
+      port: 3000,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    }
+  }),
   
   // 输出目录
   outputDir: './test-results/e2e-artifacts',
@@ -116,7 +118,6 @@ export default defineConfig({
   expect: {
     timeout: 10000,
     toHaveScreenshot: {
-      mode: 'strict',
       threshold: 0.2,
     },
     toMatchSnapshot: {

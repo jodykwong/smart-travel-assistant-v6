@@ -1,0 +1,732 @@
+{
+  "numTotalTestSuites": 34,
+  "numPassedTestSuites": 34,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 56,
+  "numPassedTests": 56,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTime": 1754341283622,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "TimelineParsingService"
+          ],
+          "fullName": " 时间线解析系统集成测试 TimelineParsingService 应该能够解析真实的LLM响应",
+          "status": "passed",
+          "title": "应该能够解析真实的LLM响应",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "TimelineParsingService"
+          ],
+          "fullName": " 时间线解析系统集成测试 TimelineParsingService 应该支持向后兼容的API",
+          "status": "passed",
+          "title": "应该支持向后兼容的API",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "TimelineParsingService"
+          ],
+          "fullName": " 时间线解析系统集成测试 TimelineParsingService 应该提供解析器统计信息",
+          "status": "passed",
+          "title": "应该提供解析器统计信息",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "TimelineParsingService"
+          ],
+          "fullName": " 时间线解析系统集成测试 TimelineParsingService 应该能够测试解析器能力",
+          "status": "passed",
+          "title": "应该能够测试解析器能力",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "性能测试"
+          ],
+          "fullName": " 时间线解析系统集成测试 性能测试 应该在合理时间内处理大量数据",
+          "status": "passed",
+          "title": "应该在合理时间内处理大量数据",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "错误处理"
+          ],
+          "fullName": " 时间线解析系统集成测试 错误处理 应该优雅地处理各种错误情况",
+          "status": "passed",
+          "title": "应该优雅地处理各种错误情况",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析系统集成测试",
+            "特性开关测试"
+          ],
+          "fullName": " 时间线解析系统集成测试 特性开关测试 应该支持特性开关控制",
+          "status": "passed",
+          "title": "应该支持特性开关控制",
+          "duration": 0,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341286320,
+      "endTime": 1754341286328,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/services/parsers/__tests__/integration.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "解析器选择机制测试"
+          ],
+          "fullName": " RobustTimelineParser 解析器选择机制测试 应该优先选择最适合的解析器",
+          "status": "passed",
+          "title": "应该优先选择最适合的解析器",
+          "duration": 6,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "解析器选择机制测试"
+          ],
+          "fullName": " RobustTimelineParser 解析器选择机制测试 应该在主解析器失败时使用备用解析器",
+          "status": "passed",
+          "title": "应该在主解析器失败时使用备用解析器",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "解析器选择机制测试"
+          ],
+          "fullName": " RobustTimelineParser 解析器选择机制测试 应该在所有专用解析器失败时使用兜底解析器",
+          "status": "passed",
+          "title": "应该在所有专用解析器失败时使用兜底解析器",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "容错机制测试"
+          ],
+          "fullName": " RobustTimelineParser 容错机制测试 应该处理空内容输入",
+          "status": "passed",
+          "title": "应该处理空内容输入",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "容错机制测试"
+          ],
+          "fullName": " RobustTimelineParser 容错机制测试 应该处理缺少上下文信息",
+          "status": "passed",
+          "title": "应该处理缺少上下文信息",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "容错机制测试"
+          ],
+          "fullName": " RobustTimelineParser 容错机制测试 应该在所有解析器都失败时提供紧急兜底数据",
+          "status": "passed",
+          "title": "应该在所有解析器都失败时提供紧急兜底数据",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "性能监控测试"
+          ],
+          "fullName": " RobustTimelineParser 性能监控测试 应该记录解析耗时",
+          "status": "passed",
+          "title": "应该记录解析耗时",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "性能监控测试"
+          ],
+          "fullName": " RobustTimelineParser 性能监控测试 应该在解析耗时过长时添加警告",
+          "status": "passed",
+          "title": "应该在解析耗时过长时添加警告",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "调试和监控功能测试"
+          ],
+          "fullName": " RobustTimelineParser 调试和监控功能测试 应该提供解析器统计信息",
+          "status": "passed",
+          "title": "应该提供解析器统计信息",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "调试和监控功能测试"
+          ],
+          "fullName": " RobustTimelineParser 调试和监控功能测试 应该能测试所有解析器对特定内容的处理能力",
+          "status": "passed",
+          "title": "应该能测试所有解析器对特定内容的处理能力",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "真实数据测试"
+          ],
+          "fullName": " RobustTimelineParser 真实数据测试 应该正确解析真实的LLM响应数据",
+          "status": "passed",
+          "title": "应该正确解析真实的LLM响应数据",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "真实数据测试"
+          ],
+          "fullName": " RobustTimelineParser 真实数据测试 应该处理不完整的LLM响应",
+          "status": "passed",
+          "title": "应该处理不完整的LLM响应",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "RobustTimelineParser",
+            "真实数据测试"
+          ],
+          "fullName": " RobustTimelineParser 真实数据测试 应该处理包含特殊字符的内容",
+          "status": "passed",
+          "title": "应该处理包含特殊字符的内容",
+          "duration": 0,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341286310,
+      "endTime": 1754341286324,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/services/parsers/__tests__/robust-timeline-parser.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该正确识别解析器名称",
+          "status": "passed",
+          "title": "应该正确识别解析器名称",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该返回正确的优先级",
+          "status": "passed",
+          "title": "应该返回正确的优先级",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该能处理包含时间段标记的内容",
+          "status": "passed",
+          "title": "应该能处理包含时间段标记的内容",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该能处理包含具体时间的内容",
+          "status": "passed",
+          "title": "应该能处理包含具体时间的内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该能处理长文本内容",
+          "status": "passed",
+          "title": "应该能处理长文本内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "基础功能测试"
+          ],
+          "fullName": " TimelineActivityParser 基础功能测试 应该拒绝处理空内容",
+          "status": "passed",
+          "title": "应该拒绝处理空内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "Markdown格式解析测试"
+          ],
+          "fullName": " TimelineActivityParser Markdown格式解析测试 应该正确解析标准Markdown时间段格式",
+          "status": "passed",
+          "title": "应该正确解析标准Markdown时间段格式",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "Markdown格式解析测试"
+          ],
+          "fullName": " TimelineActivityParser Markdown格式解析测试 应该正确处理单个时间段",
+          "status": "passed",
+          "title": "应该正确处理单个时间段",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "Markdown格式解析测试"
+          ],
+          "fullName": " TimelineActivityParser Markdown格式解析测试 应该正确处理不同的时间段名称",
+          "status": "passed",
+          "title": "应该正确处理不同的时间段名称",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "具体时间格式解析测试"
+          ],
+          "fullName": " TimelineActivityParser 具体时间格式解析测试 应该正确解析具体时间格式",
+          "status": "passed",
+          "title": "应该正确解析具体时间格式",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "具体时间格式解析测试"
+          ],
+          "fullName": " TimelineActivityParser 具体时间格式解析测试 应该正确处理中文时间格式",
+          "status": "passed",
+          "title": "应该正确处理中文时间格式",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "边界情况测试"
+          ],
+          "fullName": " TimelineActivityParser 边界情况测试 应该处理空内容",
+          "status": "passed",
+          "title": "应该处理空内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "边界情况测试"
+          ],
+          "fullName": " TimelineActivityParser 边界情况测试 应该处理只有空白字符的内容",
+          "status": "passed",
+          "title": "应该处理只有空白字符的内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "边界情况测试"
+          ],
+          "fullName": " TimelineActivityParser 边界情况测试 应该处理格式错误的内容",
+          "status": "passed",
+          "title": "应该处理格式错误的内容",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "边界情况测试"
+          ],
+          "fullName": " TimelineActivityParser 边界情况测试 应该处理超长内容",
+          "status": "passed",
+          "title": "应该处理超长内容",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "边界情况测试"
+          ],
+          "fullName": " TimelineActivityParser 边界情况测试 应该处理缺少上下文信息",
+          "status": "passed",
+          "title": "应该处理缺少上下文信息",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "活动对象构建测试"
+          ],
+          "fullName": " TimelineActivityParser 活动对象构建测试 应该正确构建活动对象的所有属性",
+          "status": "passed",
+          "title": "应该正确构建活动对象的所有属性",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "活动对象构建测试"
+          ],
+          "fullName": " TimelineActivityParser 活动对象构建测试 应该正确增强活动描述",
+          "status": "passed",
+          "title": "应该正确增强活动描述",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "TimelineActivityParser",
+            "性能测试"
+          ],
+          "fullName": " TimelineActivityParser 性能测试 应该在合理时间内完成解析",
+          "status": "passed",
+          "title": "应该在合理时间内完成解析",
+          "duration": 0,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341286288,
+      "endTime": 1754341286302,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/services/parsers/__tests__/timeline-activity-parser.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "服务集成测试"
+          ],
+          "fullName": " 时间线解析器集成测试 服务集成测试 TC-INT-001: 应该正确解析LLM响应",
+          "status": "passed",
+          "title": "TC-INT-001: 应该正确解析LLM响应",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "服务集成测试"
+          ],
+          "fullName": " 时间线解析器集成测试 服务集成测试 TC-INT-002: 应该处理解析失败的情况",
+          "status": "passed",
+          "title": "TC-INT-002: 应该处理解析失败的情况",
+          "duration": 0,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "向后兼容性测试"
+          ],
+          "fullName": " 时间线解析器集成测试 向后兼容性测试 TC-INT-003: 原有parseTimelineActivities函数应该正常工作",
+          "status": "passed",
+          "title": "TC-INT-003: 原有parseTimelineActivities函数应该正常工作",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "向后兼容性测试"
+          ],
+          "fullName": " 时间线解析器集成测试 向后兼容性测试 TC-INT-004: 应该保持相同的数据结构",
+          "status": "passed",
+          "title": "TC-INT-004: 应该保持相同的数据结构",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "特性开关测试"
+          ],
+          "fullName": " 时间线解析器集成测试 特性开关测试 TC-INT-005: 应该根据环境变量选择解析器",
+          "status": "passed",
+          "title": "TC-INT-005: 应该根据环境变量选择解析器",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "特性开关测试"
+          ],
+          "fullName": " 时间线解析器集成测试 特性开关测试 TC-INT-006: 特性开关切换应该无缝进行",
+          "status": "passed",
+          "title": "TC-INT-006: 特性开关切换应该无缝进行",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "数据一致性测试"
+          ],
+          "fullName": " 时间线解析器集成测试 数据一致性测试 TC-INT-007: 新旧解析器结果应该基本一致",
+          "status": "passed",
+          "title": "TC-INT-007: 新旧解析器结果应该基本一致",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器集成测试",
+            "错误处理集成测试"
+          ],
+          "fullName": " 时间线解析器集成测试 错误处理集成测试 TC-INT-008: 应该优雅处理解析错误",
+          "status": "passed",
+          "title": "TC-INT-008: 应该优雅处理解析错误",
+          "duration": 1,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341287417,
+      "endTime": 1754341287429,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/tests/integration/timeline-parser-integration.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-001: 标准内容解析应在100ms内完成",
+          "status": "passed",
+          "title": "PERF-001: 标准内容解析应在100ms内完成",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-002: 大文本解析性能测试",
+          "status": "passed",
+          "title": "PERF-002: 大文本解析性能测试",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-003: 复杂格式解析性能测试",
+          "status": "passed",
+          "title": "PERF-003: 复杂格式解析性能测试",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "并发性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 并发性能测试 PERF-004: 应该支持100+并发请求",
+          "status": "passed",
+          "title": "PERF-004: 应该支持100+并发请求",
+          "duration": 10,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "并发性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 并发性能测试 PERF-005: 高并发下的错误处理性能",
+          "status": "passed",
+          "title": "PERF-005: 高并发下的错误处理性能",
+          "duration": 7,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "内存使用测试"
+          ],
+          "fullName": " 时间线解析器性能测试 内存使用测试 PERF-006: 长时间运行不应出现内存泄漏",
+          "status": "passed",
+          "title": "PERF-006: 长时间运行不应出现内存泄漏",
+          "duration": 28,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "内存使用测试"
+          ],
+          "fullName": " 时间线解析器性能测试 内存使用测试 PERF-007: 大对象处理的内存效率",
+          "status": "passed",
+          "title": "PERF-007: 大对象处理的内存效率",
+          "duration": 5,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "解析器选择性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 解析器选择性能测试 PERF-008: 解析器选择策略的效率",
+          "status": "passed",
+          "title": "PERF-008: 解析器选择策略的效率",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "解析器选择性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 解析器选择性能测试 PERF-009: 解析器缓存效果测试",
+          "status": "passed",
+          "title": "PERF-009: 解析器缓存效果测试",
+          "duration": 1,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341286320,
+      "endTime": 1754341286380,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/tests/performance/timeline-parser-performance.test.ts"
+    }
+  ]
+}

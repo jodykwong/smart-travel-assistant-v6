@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { TimelineParsingService } from '@/services/parsers';
 
 // 格式化内容组件 - 将LLM原始文本转换为结构化展示
 const FormattedContent: React.FC<{ content: string }> = ({ content }) => {
@@ -264,7 +265,7 @@ const getSmartDefaultImage = (attractionName: string): string => {
 };
 
 // 解析单日详细数据
-const parseSingleDayData = (llmResponse: string, day: number, destination: string) => {
+const parseSingleDayData = async (llmResponse: string, day: number, destination: string) => {
   // 尝试多种日期格式匹配
   const dayPatterns = [
     new RegExp(`Day\\s*${day}[:\\s]*([^\\n]+)`, 'i'),
@@ -300,8 +301,8 @@ const parseSingleDayData = (llmResponse: string, day: number, destination: strin
   if (dayContentMatch) {
     const dayContent = dayContentMatch[0];
 
-    // 解析时间段活动
-    activities = parseTimelineActivities(dayContent, destination);
+    // 解析时间段活动 - 使用新的解析服务
+    activities = await parseActivitiesWithNewService(dayContent, destination);
 
     // 计算总费用
     totalCost = activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
@@ -327,7 +328,41 @@ const parseSingleDayData = (llmResponse: string, day: number, destination: strin
   };
 };
 
-// 解析时间线活动
+// 使用新解析服务的活动解析函数
+const parseActivitiesWithNewService = async (dayContent: string, destination: string) => {
+  try {
+    const service = new TimelineParsingService();
+    const result = await service.parseTimeline(dayContent, { destination });
+
+    if (result.success && result.data) {
+      console.log(`✅ 新解析器成功解析 ${result.data.length} 个活动`);
+      return result.data;
+    } else {
+      console.warn('⚠️ 新解析器失败，使用兜底方案:', result.errors);
+      return generateSimpleFallbackActivities(dayContent, destination);
+    }
+  } catch (error) {
+    console.error('❌ 解析器异常:', error);
+    return generateSimpleFallbackActivities(dayContent, destination);
+  }
+};
+
+// 简化的兜底活动生成
+const generateSimpleFallbackActivities = (content: string, destination: string) => {
+  const periods = ['上午', '下午', '晚上'];
+  return periods.map((period, index) => ({
+    time: period === '上午' ? '09:00-12:00' : period === '下午' ? '14:00-17:00' : '19:00-21:00',
+    period,
+    title: `${destination}${period}活动`,
+    description: `探索${destination}的${period}时光`,
+    icon: '📍',
+    cost: 100 + index * 50,
+    duration: '约2-3小时',
+    color: period === '上午' ? 'bg-blue-100' : period === '下午' ? 'bg-green-100' : 'bg-purple-100'
+  }));
+};
+
+// 原始解析函数（待移除）
 const parseTimelineActivities = (dayContent: string, destination: string) => {
   const activities = [];
 
@@ -657,7 +692,7 @@ const generateIntelligentDefaultActivities = (title: string, destination: string
 };
 
 // 从LLM响应中解析每日活动数据
-const parseDayActivities = (llmResponse: string, totalDays: number, startDate: string, destination: string): DayActivity[] => {
+const parseDayActivities = async (llmResponse: string, totalDays: number, startDate: string, destination: string): Promise<DayActivity[]> => {
   const activities: DayActivity[] = [];
 
   console.log('🔍 开始解析LLM响应数据:', {
@@ -671,7 +706,7 @@ const parseDayActivities = (llmResponse: string, totalDays: number, startDate: s
     currentDate.setDate(currentDate.getDate() + day - 1);
 
     // 解析每日详细内容
-    const dayData = parseSingleDayData(llmResponse, day, destination);
+    const dayData = await parseSingleDayData(llmResponse, day, destination);
 
     let dayTitle = dayData.title || `第${day}天行程`;
     let attractionName = dayData.mainAttraction || destination;
@@ -856,7 +891,7 @@ export default function PlanningResult() {
         setPlan(planData);
 
         // 解析每日活动数据
-        const activities = parseDayActivities(
+        const activities = await parseDayActivities(
           planData.llmResponse || '',
           planData.totalDays,
           planData.startDate,

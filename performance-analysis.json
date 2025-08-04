@@ -1,0 +1,132 @@
+{
+  "numTotalTestSuites": 6,
+  "numPassedTestSuites": 6,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 9,
+  "numPassedTests": 9,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTime": 1754341327970,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-001: 标准内容解析应在100ms内完成",
+          "status": "passed",
+          "title": "PERF-001: 标准内容解析应在100ms内完成",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-002: 大文本解析性能测试",
+          "status": "passed",
+          "title": "PERF-002: 大文本解析性能测试",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "单次解析性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 单次解析性能测试 PERF-003: 复杂格式解析性能测试",
+          "status": "passed",
+          "title": "PERF-003: 复杂格式解析性能测试",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "并发性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 并发性能测试 PERF-004: 应该支持100+并发请求",
+          "status": "passed",
+          "title": "PERF-004: 应该支持100+并发请求",
+          "duration": 8,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "并发性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 并发性能测试 PERF-005: 高并发下的错误处理性能",
+          "status": "passed",
+          "title": "PERF-005: 高并发下的错误处理性能",
+          "duration": 5,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "内存使用测试"
+          ],
+          "fullName": " 时间线解析器性能测试 内存使用测试 PERF-006: 长时间运行不应出现内存泄漏",
+          "status": "passed",
+          "title": "PERF-006: 长时间运行不应出现内存泄漏",
+          "duration": 26,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "内存使用测试"
+          ],
+          "fullName": " 时间线解析器性能测试 内存使用测试 PERF-007: 大对象处理的内存效率",
+          "status": "passed",
+          "title": "PERF-007: 大对象处理的内存效率",
+          "duration": 6,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "解析器选择性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 解析器选择性能测试 PERF-008: 解析器选择策略的效率",
+          "status": "passed",
+          "title": "PERF-008: 解析器选择策略的效率",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "时间线解析器性能测试",
+            "解析器选择性能测试"
+          ],
+          "fullName": " 时间线解析器性能测试 解析器选择性能测试 PERF-009: 解析器缓存效果测试",
+          "status": "passed",
+          "title": "PERF-009: 解析器缓存效果测试",
+          "duration": 1,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1754341329176,
+      "endTime": 1754341329230,
+      "status": "passed",
+      "message": "",
+      "name": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.1/src/tests/performance/timeline-parser-performance.test.ts"
+    }
+  ]
+}
