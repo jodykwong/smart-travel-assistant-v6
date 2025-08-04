@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新疆8日游 - 智游助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'glass': 'rgba(255, 255, 255, 0.1)',
+                        'primary': '#6366f1',
+                        'secondary': '#8b5cf6',
+                        'accent': '#06b6d4',
+                        'success': '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-x-hidden">
+    <!-- iOS状态栏 -->
+    <div id="status-bar" class="fixed top-0 left-0 right-0 h-12 z-50"></div>
+
+    <!-- 主容器 -->
+    <div class="mobile-container mx-auto max-w-[375px] min-h-screen bg-white relative">
+        <!-- 头部区域 -->
+        <div class="relative h-80 overflow-hidden">
+            <!-- 背景图片 -->
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center" 
+                     alt="新疆风光" 
+                     class="w-full h-full object-cover opacity-80">
+            </div>
+            
+            <!-- 渐变遮罩 -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            
+            <!-- 导航栏 -->
+            <div class="absolute top-12 left-0 right-0 flex items-center justify-between px-4 z-10">
+                <button class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover-float">
+                    <i class="fas fa-arrow-left text-white text-lg"></i>
+                </button>
+                <div class="flex gap-2">
+                    <button class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover-float">
+                        <i class="fas fa-share-alt text-white"></i>
+                    </button>
+                    <button class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover-float">
+                        <i class="fas fa-heart text-white"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 标题信息 -->
+            <div class="absolute bottom-6 left-4 right-4">
+                <div class="glass rounded-2xl p-4 animate-slide-up">
+                    <h1 class="text-2xl font-bold text-white mb-2">新疆深度8日游</h1>
+                    <div class="flex items-center gap-4 text-white/90 text-sm">
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>8月4日 - 8月12日</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-users"></i>
+                            <span>2人</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl font-bold text-white">¥8,800</span>
+                            <span class="text-white/70 text-sm">/人</span>
+                        </div>
+                        <div class="flex items-center gap-1 bg-success/20 px-2 py-1 rounded-full">
+                            <i class="fas fa-star text-yellow-400 text-xs"></i>
+                            <span class="text-white text-xs">智能推荐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="px-4 pb-24 -mt-4 relative z-10">
+            <!-- 快速概览卡片 -->
+            <div class="bg-white rounded-2xl card-shadow-2 p-4 mb-6 animate-fade-in">
+                <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-primary"></i>
+                    行程概览
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-map-marked-alt text-white"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-800">12</div>
+                        <div class="text-xs text-gray-500">景点</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-utensils text-white"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-800">18</div>
+                        <div class="text-xs text-gray-500">美食</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 每日行程标题 -->
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">每日行程</h2>
+                <button class="text-primary text-sm font-medium">查看全部</button>
+            </div>
+
+            <!-- 每日行程列表 -->
+            <div class="space-y-4" id="daily-itinerary">
+                <!-- Day 1 -->
+                <div class="bg-white rounded-2xl card-shadow-1 overflow-hidden hover-float" onclick="toggleDay(1)">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">1</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">抵达乌鲁木齐</h3>
+                                    <p class="text-xs text-gray-500">8月4日 周日</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">¥280</span>
+                                <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform" id="arrow-1"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- 预览活动 -->
+                        <div class="flex gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">机场接机</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">酒店入住</span>
+                            <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">+2个活动</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 展开内容 -->
+                    <div class="hidden px-4 pb-4" id="day-1-content">
+                        <div class="border-t pt-4">
+                            <div class="space-y-3">
+                                <!-- 上午 -->
+                                <div class="flex gap-3">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                            <span class="text-xs">🌅</span>
+                                        </div>
+                                        <div class="w-px h-12 bg-gray-200 mt-1"></div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800 text-sm">上午 (09:00-12:00)</h4>
+                                        <p class="text-xs text-gray-600 mt-1">机场接机，前往酒店办理入住</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 下午 -->
+                                <div class="flex gap-3">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <span class="text-xs">☀️</span>
+                                        </div>
+                                        <div class="w-px h-12 bg-gray-200 mt-1"></div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800 text-sm">下午 (14:00-18:00)</h4>
+                                        <p class="text-xs text-gray-600 mt-1">游览红山公园，品尝新疆特色美食</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 晚上 -->
+                                <div class="flex gap-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span class="text-xs">🌙</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800 text-sm">晚上 (19:00-21:00)</h4>
+                                        <p class="text-xs text-gray-600 mt-1">国际大巴扎夜市，体验民族风情</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 2 -->
+                <div class="bg-white rounded-2xl card-shadow-1 overflow-hidden hover-float" onclick="toggleDay(2)">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">2</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">天山天池一日游</h3>
+                                    <p class="text-xs text-gray-500">8月5日 周一</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">¥420</span>
+                                <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform" id="arrow-2"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">天山天池</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">缆车观光</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">+3个活动</span>
+                        </div>
+                    </div>
+                    
+                    <div class="hidden px-4 pb-4" id="day-2-content">
+                        <div class="border-t pt-4">
+                            <p class="text-sm text-gray-600">详细行程内容...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 3 -->
+                <div class="bg-white rounded-2xl card-shadow-1 overflow-hidden hover-float" onclick="toggleDay(3)">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">3</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">前往吐鲁番</h3>
+                                    <p class="text-xs text-gray-500">8月6日 周二</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">¥380</span>
+                                <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform" id="arrow-3"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-3">
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">火焰山</span>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">葡萄沟</span>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">+2个活动</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 更多天数提示 -->
+            <div class="mt-6 text-center">
+                <button class="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-2xl font-medium btn-ripple hover-float">
+                    查看完整8天行程
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS底部导航栏 -->
+    <div id="tab-bar" class="fixed bottom-0 left-0 right-0 h-20 z-50"></div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
