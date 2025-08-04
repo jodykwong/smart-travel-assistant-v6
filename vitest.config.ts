@@ -95,11 +95,7 @@ export default defineConfig({
     },
     
     // 报告器
-    reporter: ['verbose', 'json', 'html'],
-    outputFile: {
-      json: './test-results/results.json',
-      html: './test-results/index.html',
-    },
+    reporter: ['verbose'],
   },
   
   // 路径解析
