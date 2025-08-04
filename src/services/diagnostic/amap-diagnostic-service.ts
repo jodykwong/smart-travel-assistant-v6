@@ -262,7 +262,11 @@ export class AmapDiagnosticService {
   // 辅助方法
   private analyzeApiKeyStatus(): 'valid' | 'invalid' | 'missing' | 'default' {
     if (!this.config.apiKey) return 'missing';
-    if (this.config.apiKey === '122e7e01e2b31768d91052d296e57c20') return 'default';
+    // 检查是否为示例/默认密钥（通过长度和模式判断）
+    if (this.config.apiKey.length === 32 && this.config.apiKey.match(/^[a-f0-9]{32}$/)) {
+      // 可能是示例密钥，但不硬编码具体值
+      return 'default';
+    }
     if (this.config.apiKey.length < 20) return 'invalid';
     return 'valid';
   }

@@ -2,6 +2,150 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 
+// 格式化内容组件 - 将LLM原始文本转换为结构化展示
+const FormattedContent: React.FC<{ content: string }> = ({ content }) => {
+  // 处理内容格式化
+  const formatContent = (text: string) => {
+    if (!text) return [];
+
+    // 分割段落
+    const paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0);
+
+    return paragraphs.map((paragraph, index) => {
+      const trimmed = paragraph.trim();
+
+      // 检测emoji开头的重要提醒信息
+      if (trimmed.match(/^💡\s/)) {
+        return {
+          type: 'highlight',
+          content: trimmed.replace(/^💡\s/, ''),
+          key: `highlight-${index}`
+        };
+      }
+
+      // 检测emoji开头的费用信息
+      if (trimmed.match(/^💰\s/)) {
+        return {
+          type: 'cost-info',
+          content: trimmed.replace(/^💰\s/, ''),
+          key: `cost-${index}`
+        };
+      }
+
+      // 检测emoji开头的交通信息
+      if (trimmed.match(/^🚗\s/)) {
+        return {
+          type: 'transport-info',
+          content: trimmed.replace(/^🚗\s/, ''),
+          key: `transport-${index}`
+        };
+      }
+
+      // 检测列表项（包括emoji和符号）
+      if (trimmed.match(/^[-*•]\s/)) {
+        return {
+          type: 'list-item',
+          content: trimmed.replace(/^[-*•]\s/, ''),
+          key: `list-${index}`
+        };
+      }
+
+      // 检测时间信息
+      if (trimmed.match(/\d{1,2}[:：]\d{2}|\d{1,2}[点时]/)) {
+        return {
+          type: 'time-info',
+          content: trimmed,
+          key: `time-${index}`
+        };
+      }
+
+      // 检测传统格式的重要信息（包含关键词）
+      if (trimmed.match(/注意|提醒|建议|推荐|特别|重要/)) {
+        return {
+          type: 'highlight',
+          content: trimmed,
+          key: `highlight-${index}`
+        };
+      }
+
+      // 检测传统格式的费用信息
+      if (trimmed.match(/[¥￥]\d+|费用|价格|门票/)) {
+        return {
+          type: 'cost-info',
+          content: trimmed,
+          key: `cost-${index}`
+        };
+      }
+
+      // 普通段落
+      return {
+        type: 'paragraph',
+        content: trimmed,
+        key: `para-${index}`
+      };
+    });
+  };
+
+  const formattedItems = formatContent(content);
+
+  return (
+    <div className="space-y-3">
+      {formattedItems.map((item) => {
+        switch (item.type) {
+          case 'list-item':
+            return (
+              <div key={item.key} className="flex items-start gap-2 pl-2">
+                <span className="text-pink-500 mt-1 font-bold">•</span>
+                <span className="flex-1 text-gray-700 leading-relaxed">{item.content}</span>
+              </div>
+            );
+
+          case 'time-info':
+            return (
+              <div key={item.key} className="inline-flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                <span className="text-blue-600">⏰</span>
+                <span className="text-blue-800 font-medium text-sm">{item.content}</span>
+              </div>
+            );
+
+          case 'highlight':
+            return (
+              <div key={item.key} className="bg-yellow-50 border-l-4 border-yellow-400 px-4 py-3 rounded-r-lg">
+                <div className="flex items-start gap-2">
+                  <span className="text-yellow-600 mt-0.5">💡</span>
+                  <span className="text-yellow-800 font-medium leading-relaxed">{item.content}</span>
+                </div>
+              </div>
+            );
+
+          case 'cost-info':
+            return (
+              <div key={item.key} className="inline-flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+                <span className="text-green-600">💰</span>
+                <span className="text-green-800 font-medium text-sm">{item.content}</span>
+              </div>
+            );
+
+          case 'transport-info':
+            return (
+              <div key={item.key} className="inline-flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg border border-purple-100">
+                <span className="text-purple-600">🚗</span>
+                <span className="text-purple-800 font-medium text-sm">{item.content}</span>
+              </div>
+            );
+
+          default:
+            return (
+              <p key={item.key} className="text-gray-700 leading-relaxed">
+                {item.content}
+              </p>
+            );
+        }
+      })}
+    </div>
+  );
+};
+
 interface TravelPlan {
   id: string;
   title: string;
@@ -45,6 +189,8 @@ interface DayActivity {
 // 通过LLM API获取景点真实图片（遵循技术约束）
 const getAttractionImageViaLLM = async (attractionName: string, city: string): Promise<string> => {
   try {
+    console.log(`🔍 开始获取景点图片: ${attractionName} in ${city}`);
+
     // 调用LLM API，让LLM使用高德地图MCP工具搜索景点图片
     const response = await fetch('/api/llm-amap-search', {
       method: 'POST',
@@ -60,16 +206,29 @@ const getAttractionImageViaLLM = async (attractionName: string, city: string): P
 
     if (response.ok) {
       const data = await response.json();
-      if (data.imageUrl && data.imageUrl.startsWith('http')) {
+      console.log(`📡 API响应:`, data);
+
+      if (data.success && data.imageUrl && data.imageUrl.startsWith('http')) {
+        console.log(`✅ 成功获取真实景点图片: ${data.imageUrl}`);
         return data.imageUrl;
+      } else if (data.imageUrl && data.imageUrl.startsWith('http')) {
+        // 即使success为false，如果有有效的imageUrl也使用
+        console.log(`⚠️ API返回警告，但仍获得图片: ${data.imageUrl}`);
+        return data.imageUrl;
+      } else {
+        console.log(`⚠️ API未返回有效图片URL，使用智能默认图片`);
       }
+    } else {
+      console.warn(`❌ API调用失败: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
-    console.warn('通过LLM获取景点图片失败:', error);
+    console.warn('❌ 通过LLM获取景点图片失败:', error);
   }
 
   // 返回智能默认图片
-  return getSmartDefaultImage(attractionName);
+  const defaultImage = getSmartDefaultImage(attractionName);
+  console.log(`🎨 使用智能默认图片: ${defaultImage}`);
+  return defaultImage;
 };
 
 // 获取智能默认图片（基于景点名称的智能匹配，使用高德真实图片URL）
@@ -172,25 +331,98 @@ const parseSingleDayData = (llmResponse: string, day: number, destination: strin
 const parseTimelineActivities = (dayContent: string, destination: string) => {
   const activities = [];
 
-  // 查找时间段模式
-  const timePatterns = [
-    /(\d{1,2}:\d{2}[-~]\d{1,2}:\d{2})[：:\s]*([^\\n]+)/g,
-    /(上午|下午|晚上|早上|中午)[：:\s]*([^\\n]+)/g,
-    /(\d{1,2}[点时][-~]\d{1,2}[点时])[：:\s]*([^\\n]+)/g
-  ];
+  console.log('🔍 解析时间线活动，内容长度:', dayContent.length);
 
-  for (const pattern of timePatterns) {
-    let match;
-    while ((match = pattern.exec(dayContent)) !== null) {
-      const timeStr = match[1];
-      const description = match[2].trim();
+  // 使用更精确的方法：先按时间段分割，再提取内容
+  const timeBlockRegex = /-\s*\*\*\s*(上午|下午|晚上|早上|中午)\s*\*\*\s*/g;
+  const timeBlocks = [];
+  let lastIndex = 0;
+  let match;
 
-      if (description.length > 5) { // 过滤掉太短的描述
+  // 找到所有时间段标记的位置
+  while ((match = timeBlockRegex.exec(dayContent)) !== null) {
+    if (lastIndex > 0) {
+      // 保存上一个时间段的内容
+      const prevContent = dayContent.substring(lastIndex, match.index).trim();
+      if (prevContent) {
+        timeBlocks[timeBlocks.length - 1].content = prevContent;
+      }
+    }
+
+    timeBlocks.push({
+      period: match[1],
+      startIndex: match.index,
+      content: ''
+    });
+    lastIndex = match.index + match[0].length;
+  }
+
+  // 处理最后一个时间段
+  if (timeBlocks.length > 0) {
+    const lastContent = dayContent.substring(lastIndex).trim();
+    timeBlocks[timeBlocks.length - 1].content = lastContent;
+  }
+
+  console.log(`🔍 找到 ${timeBlocks.length} 个时间段:`, timeBlocks.map(b => b.period));
+
+  // 处理每个时间段
+  timeBlocks.forEach((block, index) => {
+    const { period, content } = block;
+
+    if (!content || content.length < 10) {
+      console.log(`⚠️ 时间段 ${period} 内容太短，跳过`);
+      return;
+    }
+
+    // 提取该时间段下的活动项
+    const activityLines = content.split('\n').filter(line => {
+      const trimmed = line.trim();
+      return trimmed.length > 5 && (trimmed.startsWith('-') || trimmed.includes('：') || trimmed.includes(':'));
+    });
+
+    if (activityLines.length === 0) {
+      // 如果没有找到明确的活动项，将整个内容作为一个活动
+      activityLines.push(content);
+    }
+
+    // 合并所有活动项为一个描述
+    const description = activityLines.map(line =>
+      line.replace(/^-\s*/, '').replace(/\*\*/g, '').trim()
+    ).join('\n');
+
+    if (description && description.length > 10) {
+      console.log(`📅 找到活动: ${period} - ${description.substring(0, 50)}...`);
+
+      activities.push({
+        time: normalizeTimeString(period),
+        period: getPeriodFromTime(period),
+        title: extractActivityTitle(description),
+        description: enhanceActivityDescription(description, period),
+        icon: getActivityIcon(description),
+        cost: extractCostFromDescription(description) || generateReasonableCost(description),
+        duration: extractDurationFromDescription(description) || '约2-3小时',
+        color: getActivityColor(period)
+      });
+    }
+  });
+
+  // 如果没有找到任何时间段，尝试其他格式
+  if (activities.length === 0) {
+    console.log('🔍 未找到标准时间段格式，尝试其他解析方式...');
+
+    // 尝试匹配具体时间格式
+    const specificTimePattern = /(\d{1,2}:\d{2}[-~]\d{1,2}:\d{2})[：:\s]*([^\\n]+)/g;
+    let specificMatch;
+    while ((specificMatch = specificTimePattern.exec(dayContent)) !== null) {
+      const timeStr = specificMatch[1];
+      const description = specificMatch[2].trim();
+
+      if (description && description.length > 10) {
         activities.push({
           time: normalizeTimeString(timeStr),
           period: getPeriodFromTime(timeStr),
           title: extractActivityTitle(description),
-          description: description.substring(0, 100),
+          description: enhanceActivityDescription(description, timeStr),
           icon: getActivityIcon(description),
           cost: extractCostFromDescription(description) || generateReasonableCost(description),
           duration: extractDurationFromDescription(description) || '约2-3小时',
@@ -200,6 +432,7 @@ const parseTimelineActivities = (dayContent: string, destination: string) => {
     }
   }
 
+  console.log(`✅ 解析完成，找到 ${activities.length} 个活动`);
   return activities;
 };
 
@@ -229,6 +462,68 @@ const extractActivityTitle = (description: string): string => {
   // 提取活动标题的逻辑
   const titleMatch = description.match(/^([^，。：:]+)/);
   return titleMatch ? titleMatch[1].trim() : description.substring(0, 20);
+};
+
+// 增强活动描述 - 将原始LLM文本转换为结构化描述
+const enhanceActivityDescription = (description: string, timeStr: string): string => {
+  if (!description) return '';
+
+
+
+  // 清理描述文本，保留换行符
+  let enhanced = description.trim();
+
+  // 移除重复的时间信息
+  enhanced = enhanced.replace(/\d{1,2}[:：]\d{2}[-~]\d{1,2}[:：]\d{2}/, '').trim();
+  enhanced = enhanced.replace(/^[：:]\s*/, '').trim();
+
+  // 处理多行内容，按行分割而不是按句子分割
+  const lines = enhanced.split(/\n/).filter(line => line.trim().length > 0);
+
+  if (lines.length === 0) return enhanced;
+
+  // 重新组织内容
+  const organizedContent = [];
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // 移除Markdown格式标记
+    const cleanLine = trimmed.replace(/\*\*/g, '').replace(/^\-\s*/, '').trim();
+
+    if (cleanLine.length < 3) return; // 过滤太短的内容
+
+    // 检查是否是建议或提醒
+    if (cleanLine.match(/建议|推荐|注意|提醒|小贴士|温馨提示/)) {
+      organizedContent.push(`💡 ${cleanLine}`);
+    }
+    // 检查是否是费用信息
+    else if (cleanLine.match(/[¥￥]\d+|费用|门票|价格|约.*元|人均.*元/)) {
+      organizedContent.push(`💰 ${cleanLine}`);
+    }
+    // 检查是否是交通信息
+    else if (cleanLine.match(/交通|地铁|公交|打车|步行|乘坐|前往|到达|约.*分钟/)) {
+      organizedContent.push(`🚗 ${cleanLine}`);
+    }
+    // 检查是否是时间信息
+    else if (cleanLine.match(/\d{1,2}[:：]\d{2}|\d{1,2}[点时]|约.*小时|约.*分钟/)) {
+      organizedContent.push(`⏰ ${cleanLine}`);
+    }
+    // 如果是第一行且比较长，作为主要描述
+    else if (index === 0 && cleanLine.length > 10) {
+      organizedContent.push(cleanLine);
+    }
+    // 其他内容作为列表项
+    else {
+      organizedContent.push(`• ${cleanLine}`);
+    }
+  });
+
+  const result = organizedContent.join('\n');
+
+  // 不限制长度，让FormattedContent组件处理显示
+  return result;
 };
 
 const getActivityIcon = (description: string): string => {
@@ -266,12 +561,56 @@ const getActivityColor = (timeStr: string): string => {
 
 // 生成智能默认活动（当无法解析LLM内容时使用）
 const generateIntelligentDefaultActivities = (title: string, destination: string) => {
+  // 基于标题和目的地生成更智能的活动描述
+  const generateSmartDescription = (period: string, title: string, destination: string): string => {
+    const descriptions = [];
+
+    if (period === '上午') {
+      descriptions.push(`开始${destination}的精彩一天`);
+      if (title.includes('西湖')) {
+        descriptions.push('• 漫步苏堤白堤，感受湖光山色');
+        descriptions.push('• 参观断桥残雪，聆听白娘子传说');
+        descriptions.push('💡 建议：清晨游览人少景美，适合拍照');
+      } else if (title.includes('古镇') || title.includes('文化')) {
+        descriptions.push('• 探索古色古香的街道巷弄');
+        descriptions.push('• 参观传统建筑和文化遗迹');
+        descriptions.push('💡 建议：穿着舒适的鞋子，便于步行游览');
+      } else {
+        descriptions.push(`• 游览${destination}标志性景点`);
+        descriptions.push('• 了解当地历史文化背景');
+        descriptions.push('💡 建议：提前了解景点开放时间');
+      }
+    } else if (period === '下午') {
+      descriptions.push(`继续深度探索${destination}`);
+      if (title.includes('美食')) {
+        descriptions.push('• 品尝地道的当地特色菜肴');
+        descriptions.push('• 探访知名餐厅和街边小吃');
+        descriptions.push('💰 预算：人均100-200元');
+      } else if (title.includes('购物')) {
+        descriptions.push('• 逛当地特色商业街区');
+        descriptions.push('• 选购纪念品和特产');
+        descriptions.push('🚗 交通：建议乘坐地铁或公交');
+      } else {
+        descriptions.push('• 深入体验当地生活方式');
+        descriptions.push('• 参与互动性强的文化活动');
+        descriptions.push('💡 建议：保持充足的体力和好奇心');
+      }
+    } else {
+      descriptions.push(`享受${destination}的夜晚时光`);
+      descriptions.push('• 欣赏城市夜景和灯光秀');
+      descriptions.push('• 体验当地夜生活文化');
+      descriptions.push('💡 建议：注意安全，结伴而行');
+    }
+
+    return descriptions.join('\n');
+  };
+
   const baseActivities = [
     {
       time: '09:00-12:00',
       period: '上午',
       title: '上午游览',
-      description: `根据"${title}"安排的上午活动`,
+      description: generateSmartDescription('上午', title, destination),
       icon: '🌅',
       cost: Math.floor(Math.random() * 100) + 50,
       duration: '约3小时',
@@ -281,7 +620,7 @@ const generateIntelligentDefaultActivities = (title: string, destination: string
       time: '14:00-17:00',
       period: '下午',
       title: '下午探索',
-      description: `根据"${title}"安排的下午活动`,
+      description: generateSmartDescription('下午', title, destination),
       icon: '☀️',
       cost: Math.floor(Math.random() * 150) + 100,
       duration: '约3小时',
@@ -291,7 +630,7 @@ const generateIntelligentDefaultActivities = (title: string, destination: string
       time: '19:00-21:00',
       period: '晚上',
       title: '夜间体验',
-      description: `根据"${title}"安排的夜间活动`,
+      description: generateSmartDescription('晚上', title, destination),
       icon: '🌙',
       cost: Math.floor(Math.random() * 80) + 40,
       duration: '约2小时',
@@ -299,14 +638,19 @@ const generateIntelligentDefaultActivities = (title: string, destination: string
     }
   ];
 
-  // 根据标题内容调整活动
+  // 根据标题内容进一步调整活动标题
   if (title.includes('西湖')) {
     baseActivities[0].title = '西湖晨游';
-    baseActivities[0].description = '清晨游览西湖，欣赏湖光山色';
-  }
-  if (title.includes('美食')) {
-    baseActivities[1].title = '品尝当地美食';
-    baseActivities[1].description = '探索当地特色餐厅和小吃';
+    baseActivities[1].title = '湖滨漫步';
+    baseActivities[2].title = '夜游西湖';
+  } else if (title.includes('美食')) {
+    baseActivities[0].title = '早茶体验';
+    baseActivities[1].title = '美食探索';
+    baseActivities[2].title = '夜市品尝';
+  } else if (title.includes('文化')) {
+    baseActivities[0].title = '文化探访';
+    baseActivities[1].title = '深度体验';
+    baseActivities[2].title = '文化夜游';
   }
 
   return baseActivities;
@@ -578,14 +922,34 @@ export default function PlanningResult() {
 
   // 异步加载真实景点图片
   const loadRealAttractionImages = async (activities: DayActivity[]) => {
+    console.log(`🖼️ 开始加载${activities.length}个景点的真实图片...`);
+
     for (const activity of activities) {
       try {
+        console.log(`📸 正在加载第${activity.day}天的景点图片: ${activity.title}`);
         setImageLoadingStates(prev => ({ ...prev, [activity.day]: true }));
 
-        // 尝试从标题中提取景点名称
-        const attractions = ['中山陵', '夫子庙', '玄武湖', '明孝陵', '秦淮河', '总统府', '鸡鸣寺', '栖霞山', '雨花台', '莫愁湖'];
+        // 智能提取景点名称 - 扩展更多景点
+        const attractions = [
+          // 南京景点
+          '中山陵', '夫子庙', '玄武湖', '明孝陵', '秦淮河', '总统府', '鸡鸣寺', '栖霞山', '雨花台', '莫愁湖',
+          // 杭州景点
+          '西湖', '灵隐寺', '雷峰塔', '断桥', '苏堤', '白堤', '三潭印月', '花港观鱼', '曲院风荷', '平湖秋月',
+          '西溪湿地', '千岛湖', '天目山', '运河', '宋城',
+          // 通用景点类型
+          '古镇', '寺庙', '公园', '湖泊', '山峰', '博物馆', '广场', '街道'
+        ];
+
         const foundAttraction = attractions.find(attr => activity.title.includes(attr));
-        const attractionName = foundAttraction || activity.location;
+        let attractionName = foundAttraction || activity.location;
+
+        // 如果没有找到具体景点，尝试从标题中提取关键词
+        if (!foundAttraction) {
+          const titleWords = activity.title.split(/[：、，。\s]+/).filter(word => word.length > 1);
+          attractionName = titleWords[0] || activity.location;
+        }
+
+        console.log(`🎯 提取的景点名称: ${attractionName} (来源: ${activity.title})`);
 
         // 通过LLM API获取真实图片
         const realImageUrl = await getAttractionImageViaLLM(attractionName, activity.location);
@@ -599,16 +963,22 @@ export default function PlanningResult() {
           )
         );
 
+        console.log(`✅ 第${activity.day}天图片加载完成: ${realImageUrl}`);
         setImageLoadingStates(prev => ({ ...prev, [activity.day]: false }));
 
         // 添加延迟避免API调用过于频繁
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
       } catch (error) {
-        console.warn(`加载第${activity.day}天真实图片失败:`, error);
+        console.warn(`❌ 加载第${activity.day}天真实图片失败:`, error);
         setImageLoadingStates(prev => ({ ...prev, [activity.day]: false }));
+
+        // 即使失败也要继续加载其他图片
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
+
+    console.log(`🎉 所有景点图片加载完成！`);
   };
 
   // 每日行程卡片组件
@@ -622,25 +992,41 @@ export default function PlanningResult() {
       >
         {/* 卡片头部 */}
         <div
-          className="p-4 lg:p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50/50 transition-colors"
+          className="p-4 lg:p-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50/50 transition-all duration-300 hover:shadow-sm active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-pink-500/20"
           onClick={() => toggleDay(activity.day)}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleDay(activity.day);
+            }
+          }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 lg:gap-4">
             {/* 景点图片 */}
             <div className="relative">
-              <div className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden">
+              <div className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden group">
                 <img
                   src={activity.image}
                   alt={activity.title}
-                  className="w-full h-full object-cover transition-opacity duration-300"
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = getSmartDefaultImage(activity.title);
+                  }}
                 />
                 {/* 图片加载状态指示器 */}
                 {imageLoadingStates[activity.day] && (
-                  <div className="absolute inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 bg-opacity-90 flex items-center justify-center backdrop-blur-sm">
+                    <div className="relative">
+                      <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 w-5 h-5 border-2 border-pink-200 rounded-full animate-ping"></div>
+                    </div>
                   </div>
                 )}
+                {/* Hover遮罩 */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
               </div>
               <div className="absolute -top-2 -left-2 w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xs lg:text-sm">{activity.day}</span>
@@ -689,9 +1075,13 @@ export default function PlanningResult() {
         </div>
 
         {/* 可展开的详细内容 */}
-        {isExpanded && (
-          <div className="animate-slide-down">
-            <div className="p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-pink-50/30">
+        <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className={`transform transition-all duration-500 ease-in-out ${
+            isExpanded ? 'translate-y-0 scale-100' : '-translate-y-4 scale-95'
+          }`}>
+            <div className="p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-pink-50/30 border-t border-gray-100">
               {/* 时间线 */}
               <div className="grid grid-cols-1 gap-6">
                 {activity.timeline.map((item, index) => (
@@ -713,7 +1103,9 @@ export default function PlanningResult() {
                           <h4 className="text-base lg:text-lg font-semibold text-gray-800">{item.title}</h4>
                           <span className="text-xs lg:text-sm text-gray-500 bg-gray-100 px-2 lg:px-3 py-1 rounded-full">{item.time}</span>
                         </div>
-                        <p className="text-sm lg:text-base text-gray-600 mb-3 lg:mb-4">{item.description}</p>
+                        <div className="text-sm lg:text-base text-gray-600 mb-3 lg:mb-4">
+                          <FormattedContent content={item.description} />
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:gap-4 text-xs lg:text-sm">
                           <div className="flex items-center gap-2">
                             <span className="text-green-600">💰</span>
@@ -745,20 +1137,29 @@ export default function PlanningResult() {
                   <button className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
                     <i className="fas fa-copy text-gray-600 text-sm lg:text-base"></i>
                   </button>
-                  <button className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <i className="fas fa-heart text-gray-600 text-sm lg:text-base"></i>
+                  <button
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-pink-100 hover:text-pink-600 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    title="收藏行程"
+                  >
+                    <i className="fas fa-heart text-gray-600 text-sm lg:text-base hover:text-pink-600 transition-colors"></i>
                   </button>
-                  <button className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <i className="fas fa-share-alt text-gray-600 text-sm lg:text-base"></i>
+                  <button
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-blue-100 hover:text-blue-600 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    title="分享行程"
+                  >
+                    <i className="fas fa-share-alt text-gray-600 text-sm lg:text-base hover:text-blue-600 transition-colors"></i>
                   </button>
-                  <button className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <i className="fas fa-map text-gray-600 text-sm lg:text-base"></i>
+                  <button
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-green-100 hover:text-green-600 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                    title="查看地图"
+                  >
+                    <i className="fas fa-map text-gray-600 text-sm lg:text-base hover:text-green-600 transition-colors"></i>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -895,21 +1296,24 @@ export default function PlanningResult() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleEditPlan}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-500/20"
+                  title="编辑行程"
                 >
-                  <i className="fas fa-edit mr-2"></i>编辑
+                  <i className="fas fa-edit mr-2 transition-transform duration-300 hover:rotate-12"></i>编辑
                 </button>
                 <button
                   onClick={handleSharePlan}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  title="分享行程"
                 >
-                  <i className="fas fa-share-alt mr-2"></i>分享
+                  <i className="fas fa-share-alt mr-2 transition-transform duration-300 hover:scale-110"></i>分享
                 </button>
                 <button
                   onClick={handleExportPDF}
-                  className="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition-all"
+                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                  title="导出PDF"
                 >
-                  <i className="fas fa-download mr-2"></i>导出PDF
+                  <i className="fas fa-download mr-2 transition-transform duration-300 hover:translate-y-[-2px]"></i>导出PDF
                 </button>
               </div>
             </div>
