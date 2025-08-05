@@ -1,12 +1,12 @@
-# 智游助手v6.0 - 企业级AI旅行规划系统
+# 智游助手v6.1 - 企业级AI旅行规划系统
 
-[![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)](https://github.com/your-repo/smart-travel-assistant)
+[![Version](https://img.shields.io/badge/version-6.1.0-blue.svg)](https://github.com/your-repo/smart-travel-assistant)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/your-repo/smart-travel-assistant/actions)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen.svg)](https://codecov.io/gh/your-repo/smart-travel-assistant)
 
-**版本**: v6.0.0
-**发布日期**: 2025年8月2日
+**版本**: v6.1.0
+**发布日期**: 2025年8月4日
 **技术栈**: Next.js 15 + React 18 + TypeScript + LangGraph + DeepSeek + 高德MCP + Redis缓存
 **商业化就绪度**: 90%
 
@@ -46,7 +46,21 @@
 - **错误处理**: 完善的异常处理和用户友好提示
 - **性能优化**: 多层缓存和懒加载策略
 
-## 🚀 v5.0版本重大更新
+## 🚀 v6.1版本重要更新
+
+### ✅ 关键问题修复
+- **表单提交问题修复**: 完全解决了多步骤旅行规划表单的提交问题
+- **React Hook Form优化**: 改进验证模式和数据收集机制
+- **用户体验提升**: 确保表单数据在步骤切换时不会丢失
+- **验证逻辑优化**: 移除了导致按钮禁用的验证问题
+
+### 🔧 技术改进
+- 多步骤表单架构优化
+- 数组字段处理机制改进
+- 表单状态管理逻辑完善
+- 实时验证体验优化
+
+## 🚀 v6.0版本重大更新
 
 ### 🔄 架构重构升级
 **从单体应用到智能编排**：

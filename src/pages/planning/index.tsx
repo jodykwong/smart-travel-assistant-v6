@@ -90,7 +90,7 @@ export default function PlanningPage() {
     getValues,
   } = useForm<TravelPreferencesForm>({
     resolver: zodResolver(travelPreferencesSchema),
-    mode: 'onBlur', // 改为onBlur模式，避免过度验证
+    mode: 'onChange', // 改为onChange模式，实时验证
     defaultValues: {
       destination: '', // 添加默认值
       startDate: '',   // 添加默认值
@@ -148,6 +148,7 @@ export default function PlanningPage() {
 
     try {
       console.log('🚀 开始创建旅行规划会话...', data);
+      console.log('📊 表单数据详情:', JSON.stringify(data, null, 2));
 
       // 调用API创建会话
       const response = await fetch('/api/v1/planning/sessions', {
@@ -213,6 +214,7 @@ export default function PlanningPage() {
                 <input
                   type="text"
                   placeholder="输入城市或国家名称"
+                  data-testid="destination-input"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                   {...register('destination')}
                 />
@@ -227,6 +229,7 @@ export default function PlanningPage() {
                   <input
                     type="date"
                     min={new Date().toISOString().split('T')[0]} // 禁用过去日期
+                    data-testid="start-date-input"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                     {...register('startDate')}
                   />
@@ -239,6 +242,7 @@ export default function PlanningPage() {
                   <input
                     type="date"
                     min={watchedValues.startDate || new Date().toISOString().split('T')[0]} // 最小日期为出发日期或今天
+                    data-testid="end-date-input"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                     {...register('endDate')}
                   />
@@ -254,6 +258,7 @@ export default function PlanningPage() {
                   type="number"
                   min={1}
                   max={20}
+                  data-testid="group-size-input"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                   {...register('groupSize', { valueAsNumber: true })}
                 />
@@ -311,7 +316,9 @@ export default function PlanningPage() {
                     <label key={style.value} className="cursor-pointer">
                       <input
                         type="checkbox"
+                        value={style.value}
                         className="sr-only"
+                        {...register('travelStyles')}
                         checked={watchedValues.travelStyles?.includes(style.value) || false}
                         onChange={(e) => handleTravelStyleChange(style.value, e.target.checked)}
                       />
@@ -439,7 +446,7 @@ export default function PlanningPage() {
           {/* 进度指示器 */}
           <div className="mb-8">
             <div className="max-w-4xl mx-auto">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" data-testid="progress-indicator">
                 {STEPS.map((step, index) => (
                   <div key={step.id} className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -467,6 +474,17 @@ export default function PlanningPage() {
           {/* 主要内容 */}
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
             <form onSubmit={handleSubmit(handleSubmitForm)}>
+              {/* 隐藏字段保存所有步骤的数据 */}
+              <input type="hidden" {...register('destination')} />
+              <input type="hidden" {...register('startDate')} />
+              <input type="hidden" {...register('endDate')} />
+              <input type="hidden" {...register('groupSize', { valueAsNumber: true })} />
+              <input type="hidden" {...register('budget')} />
+              <input type="hidden" {...register('accommodation')} />
+              <input type="hidden" {...register('specialRequirements')} />
+              {/* 旅行风格需要特殊处理 - 使用JSON字符串 */}
+              <input type="hidden" name="travelStyles" value={JSON.stringify(watchedValues.travelStyles || [])} />
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -531,6 +549,7 @@ export default function PlanningPage() {
                     type="button"
                     onClick={handleNext}
                     disabled={!isCurrentStepValid}
+                    data-testid="next-step-button"
                     className="px-6 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     下一步
@@ -538,7 +557,8 @@ export default function PlanningPage() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={!isValid || isSubmitting}
+                    disabled={isSubmitting}
+                    data-testid="generate-plan-button"
                     className="px-6 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                   >
                     {isSubmitting && (

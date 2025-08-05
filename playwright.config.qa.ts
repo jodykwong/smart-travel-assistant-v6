@@ -28,7 +28,7 @@ export default defineConfig({
   // 全局配置
   use: {
     // 基础URL
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3002',
     
     // 浏览器设置
     headless: process.env.CI ? true : false,
@@ -101,7 +101,7 @@ export default defineConfig({
   ...(process.env.CI ? {} : {
     webServer: {
       command: 'npm run dev',
-      port: 3000,
+      port: 3002,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
     }

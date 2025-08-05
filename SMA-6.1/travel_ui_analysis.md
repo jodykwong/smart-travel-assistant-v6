@@ -56,7 +56,27 @@
 ### 1. 顶部导航栏
 ```html
 <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-  <!-- 固定导航结构：Logo + 标题 + 操作按钮 -->
+  <div class="max-w-7xl mx-auto px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <!-- Logo + 标题 -->
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+          <i class="fas fa-edit mr-2"></i>编辑
+        </button>
+        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+          <i class="fas fa-share-alt mr-2"></i>分享
+        </button>
+        <button class="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition-all" onclick="exportToImage('png')">
+          <i class="fas fa-image mr-2"></i>导出图片
+        </button>
+        <button class="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition-all">
+          <i class="fas fa-download mr-2"></i>导出PDF
+        </button>
+      </div>
+    </div>
+  </div>
 </nav>
 ```
 
@@ -86,6 +106,7 @@
 ## 技术规范
 * 使用 Tailwind CDN：`<script src="https://cdn.tailwindcss.com"></script>`
 * Font Awesome：`https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css`
+* html2canvas库（用于导出图片）：`<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>`
 * 必须包含原型中的自定义配置：
 ```javascript
 tailwind.config = {
@@ -211,6 +232,7 @@ function toggleWebDay(dayNumber) {
     <title>{{旅行目的地}}深度{{天数}}日游 - 智游助手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -262,33 +284,99 @@ function toggleWebDay(dayNumber) { /* 原型代码 */ }
 function scrollToDay(dayNumber) { /* 原型代码 */ }
 function openFullMap() { /* 原型代码 */ }
 function handleResize() { /* 原型代码 */ }
+
+// 导出图片功能 - 必须包含
+function exportToImage(format = 'png') {
+    // 检测设备类型
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // 设置不同尺寸
+    const dimensions = {
+        desktop: { width: 1920, height: 1080, scale: 2 },
+        mobile: { width: 1080, height: 1920, scale: 2 }
+    };
+    
+    const config = isMobile ? dimensions.mobile : dimensions.desktop;
+    
+    // 获取要导出的内容区域
+    const element = document.querySelector('.export-content') || document.body;
+    
+    // 使用html2canvas库进行截图
+    html2canvas(element, {
+        width: config.width,
+        height: config.height,
+        scale: config.scale,
+        useCORS: true,
+        backgroundColor: '#f8fafc',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0
+    }).then(canvas => {
+        // 创建下载链接
+        const link = document.createElement('a');
+        link.download = `旅行计划_${new Date().toISOString().split('T')[0]}.${format}`;
+        link.href = canvas.toDataURL(`image/${format}`, 0.9);
+        link.click();
+    }).catch(error => {
+        console.error('导出图片失败:', error);
+        alert('导出失败，请重试');
+    });
+}
+
 // 等等...
 </script>
 ```
 
-## 景点地图功能
+## 导出图片功能要求
+
+### 功能规格
+1. **自动设备检测**：通过User-Agent自动识别设备类型
+2. **尺寸适配**：
+   - **电脑端**：1920x1080像素，高DPI支持（scale: 2）
+   - **手机端**：1080x1920像素，高DPI支持（scale: 2）
+3. **导出内容**：整个页面内容或指定的`.export-content`区域
+4. **图片质量**：PNG格式，90%质量压缩
+
+### 技术实现
+- 使用html2canvas库进行页面截图
+- 支持跨域图片处理（useCORS: true）
+- 设置统一背景色（#f8fafc）
+- 自动生成文件名：`旅行计划_YYYY-MM-DD.png`
+
+### UI交互
+- 在顶部导航栏添加"导出图片"按钮
+- 点击后自动根据设备选择合适尺寸
+- 导出过程中显示加载状态
+- 支持错误处理和用户提示
+
+### 按钮样式
+```html
+<button class="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition-all" onclick="exportToImage('png')">
+  <i class="fas fa-image mr-2"></i>导出图片
+</button>
+```
 - 在右侧边栏显示地图预览区域
 - 使用渐变背景作为占位符
 - 点击可打开完整地图功能
 - 不需要集成真实地图API，使用原型中的占位符设计
 
-## 图片处理标准
+## 景点地图功能
 - 所有景点图片使用 Unsplash 的风景图片
 - 图片尺寸：120x120 用于卡片头部
 - 使用 `object-cover` 确保图片适配
 - 示例：`https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=120&h=120&fit=crop&crop=center`
 
-## 完整性要求
+## 图片处理标准
 - 网页内容必须完整，不得因为篇幅省略内容
 - 必须包含原型中的所有UI组件和交互功能
 - 确保代码简洁高效，注重性能和可维护性
 - 永远用中文输出
 - 保证信息的完整性和视觉一致性
 
-## 地点导航功能要求
+## 完整性要求
 对于地点，可以点击地点能唤起 高德app进行导航，安卓使用安卓的，苹果使用苹果的，PC使用网页
 
-## 风格要求
+## 地点导航功能要求
 **设计目标：**
 *   **视觉吸引力：** 创造一个在视觉上令人印象深刻的网页，能够立即吸引用户的注意力，并激发他们的阅读兴趣。
 *   **可读性：** 确保内容清晰易读，无论在桌面端还是移动端，都能提供舒适的阅读体验。
