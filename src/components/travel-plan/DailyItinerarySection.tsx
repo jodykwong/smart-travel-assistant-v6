@@ -256,12 +256,12 @@ function parseDailyItineraries(llmResponse: string, startDate: string, totalDays
     const timeMatch = trimmedLine.match(/^(\d{1,2}[:：]\d{2}|上午|下午|晚上|早上|中午)\s*[：:]?\s*(.+)/) ||
                      trimmedLine.match(/^[-•]\s*(\d{1,2}[:：]\d{2}|上午|下午|晚上|早上|中午)\s*[：:]?\s*(.+)/);
     
-    if (timeMatch && currentDay) {
+    if (timeMatch && timeMatch[1] && timeMatch[2] && currentDay) {
       // 保存上一个活动
       if (currentActivity) {
         currentDay.activities.push(currentActivity);
       }
-      
+
       currentActivity = {
         time: timeMatch[1],
         activity: timeMatch[2],
@@ -327,7 +327,7 @@ function inferActivityType(activity: string): DayActivity['type'] {
 function calculateDate(startDate: string, dayOffset: number): string {
   const date = new Date(startDate);
   date.setDate(date.getDate() + dayOffset);
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split('T')[0] || '';
 }
 
 // 格式化日期显示

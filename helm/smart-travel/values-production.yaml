@@ -1,0 +1,282 @@
+# 智游助手v6.2 生产环境配置
+# Week 5-6: CD Pipeline构建 - 生产环境特定配置
+
+# 继承默认配置，覆盖生产环境特定设置
+
+# 应用配置
+app:
+  replicaCount: 5  # 生产环境多副本
+  
+  # 环境变量
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: warn
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "15000"
+  
+  # 资源配置（生产环境更大）
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1500m"
+    limits:
+      memory: "4Gi"
+      cpu: "3000m"
+  
+  # 健康检查配置（生产环境更严格）
+  healthCheck:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 90
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /api/ready
+        port: 3000
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 30
+
+# Ingress配置
+ingress:
+  enabled: true
+  hosts:
+    - host: api.smarttravel.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: production-smart-travel-tls
+      hosts:
+        - api.smarttravel.com
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "100"  # 生产环境严格限制
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://smarttravel.com,https://www.smarttravel.com"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+# 自动扩缩容（生产环境启用）
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60  # 生产环境更保守的扩容阈值
+  targetMemoryUtilizationPercentage: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # 生产环境更长的稳定窗口
+      policies:
+        - type: Percent
+          value: 5  # 生产环境更保守的缩容
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Percent
+          value: 25  # 生产环境更保守的扩容
+          periodSeconds: 60
+
+# 存储配置（生产环境更大）
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: fast-ssd  # 生产环境使用高性能存储
+
+# 配置映射
+configMap:
+  enabled: true
+  data:
+    NODE_ENV: production
+    LOG_LEVEL: warn
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "15000"
+    PROMETHEUS_ENDPOINT: "/api/metrics"
+    HEALTH_CHECK_ENDPOINT: "/api/health"
+    AMAP_API_BASE_URL: "https://restapi.amap.com"
+    CACHE_TTL: "3600"
+    CACHE_MAX_SIZE: "2000"
+
+# 依赖服务配置（生产环境高可用）
+postgresql:
+  enabled: false  # 生产环境使用外部数据库
+
+# 外部数据库配置
+externalDatabase:
+  enabled: true
+  host: "postgres-prod.smarttravel.com"
+  port: 5432
+  username: "smart_travel_prod"
+  database: "smart_travel_prod"
+
+redis:
+  enabled: false  # 生产环境使用外部Redis
+
+# 外部Redis配置
+externalRedis:
+  enabled: true
+  host: "redis-prod.smarttravel.com"
+  port: 6379
+
+# 监控配置（生产环境增强）
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      path: /api/metrics
+      labels:
+        app: smart-travel-assistant
+        environment: production
+        tier: production
+  
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
+  
+  alerts:
+    enabled: true
+    rules:
+      - alert: ProdSmartTravelAppDown
+        expr: up{job="smart-travel-assistant-prod"} == 0
+        for: 30s  # 生产环境快速告警
+        labels:
+          severity: critical
+          environment: production
+          tier: production
+        annotations:
+          summary: "生产环境智游助手应用不可用"
+          description: "生产环境智游助手应用已经下线超过30秒"
+          runbook_url: "https://docs.smarttravel.com/runbooks/prod-app-down"
+
+# 网络策略（生产环境启用）
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 6379  # Redis
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 80    # HTTP
+
+# Pod中断预算（生产环境启用）
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3  # 生产环境保证最少3个Pod可用
+
+# 支付系统保护（生产环境启用）
+deployment:
+  paymentProtection:
+    enabled: true
+    strategy: "blue-green"
+    monitoring: "enhanced"
+
+# 安全配置（生产环境严格）
+global:
+  security:
+    enabled: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+# Pod安全策略（生产环境启用）
+podSecurityPolicy:
+  enabled: true
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# 节点亲和性（生产环境启用）
+nodeAffinity:
+  enabled: true
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: node-role.kubernetes.io/worker
+        operator: In
+        values:
+        - "true"
+      - key: node.kubernetes.io/instance-type
+        operator: NotIn
+        values:
+        - spot  # 生产环境避免使用spot实例
+
+# Pod反亲和性（生产环境启用）
+podAntiAffinity:
+  enabled: true
+  requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - smart-travel-assistant
+      topologyKey: kubernetes.io/hostname
+  preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - smart-travel-assistant
+        topologyKey: topology.kubernetes.io/zone
+
+# 容忍度（生产环境配置）
+tolerations:
+  - key: "node.kubernetes.io/not-ready"
+    operator: "Exists"
+    effect: "NoExecute"
+    tolerationSeconds: 300
+  - key: "node.kubernetes.io/unreachable"
+    operator: "Exists"
+    effect: "NoExecute"
+    tolerationSeconds: 300
+
+# Harbor配置（生产环境）
+harbor:
+  username: "admin"
+  # password通过secret管理

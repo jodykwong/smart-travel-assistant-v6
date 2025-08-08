@@ -18,7 +18,7 @@ interface SessionData {
 }
 
 class DatabaseSessionManager {
-  private db: Database.Database;
+  private db!: Database.Database;
   private dbPath: string;
 
   constructor() {
@@ -69,7 +69,7 @@ class DatabaseSessionManager {
     try {
       const session: SessionData = {
         ...sessionData,
-        id: sessionData.id || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         status: 'created',
         progress: 0,
         createdAt: new Date().toISOString(),

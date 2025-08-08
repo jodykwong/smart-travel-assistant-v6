@@ -1,0 +1,103 @@
+# 智游助手v6.2 Helm Chart
+# Week 5-6: CD Pipeline构建 - Helm Charts标准化
+
+apiVersion: v2
+name: smart-travel-assistant
+description: 智游助手v6.2 - 云原生旅游助手应用
+type: application
+version: 6.2.0
+appVersion: "6.2.0"
+
+# 关键词和分类
+keywords:
+  - travel
+  - assistant
+  - nodejs
+  - nextjs
+  - monitoring
+  - payment
+
+# 维护者信息
+maintainers:
+  - name: Smart Travel Team
+    email: devops@smarttravel.com
+    url: https://smarttravel.com
+
+# 项目信息
+home: https://smarttravel.com
+sources:
+  - https://gitlab.smarttravel.local/smart-travel/smart-travel-assistant
+
+# 图标和文档
+icon: https://smarttravel.com/assets/logo.png
+deprecated: false
+
+# 依赖项
+dependencies:
+  - name: postgresql
+    version: "12.1.2"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - database
+  
+  - name: redis
+    version: "17.3.7"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+    tags:
+      - cache
+  
+  - name: prometheus
+    version: "15.18.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.prometheus.enabled
+    tags:
+      - monitoring
+  
+  - name: grafana
+    version: "6.50.7"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled
+    tags:
+      - monitoring
+
+# 注解
+annotations:
+  # Helm相关注解
+  helm.sh/hook-weight: "1"
+  
+  # 应用相关注解
+  app.kubernetes.io/name: smart-travel-assistant
+  app.kubernetes.io/instance: smart-travel
+  app.kubernetes.io/version: "6.2.0"
+  app.kubernetes.io/component: web-application
+  app.kubernetes.io/part-of: smart-travel-platform
+  app.kubernetes.io/managed-by: helm
+  
+  # 监控相关注解
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3000"
+  prometheus.io/path: "/api/metrics"
+  
+  # 部署策略注解
+  deployment.kubernetes.io/strategy: "RollingUpdate"
+  deployment.kubernetes.io/max-unavailable: "25%"
+  deployment.kubernetes.io/max-surge: "25%"
+  
+  # 安全相关注解
+  security.kubernetes.io/policy: "restricted"
+  security.kubernetes.io/scan: "enabled"
+  
+  # 网络相关注解
+  networking.kubernetes.io/ingress-class: "nginx"
+  networking.kubernetes.io/ssl-redirect: "true"
+  
+  # 存储相关注解
+  storage.kubernetes.io/class: "local-path"
+  storage.kubernetes.io/backup: "enabled"
+  
+  # 支付系统特殊注解
+  payment.smarttravel.com/protection: "enabled"
+  payment.smarttravel.com/strategy: "blue-green"
+  payment.smarttravel.com/monitoring: "enhanced"

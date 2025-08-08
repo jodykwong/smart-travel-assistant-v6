@@ -26,7 +26,7 @@ class CacheService {
       defaultTTL: 3600, // 1小时
       maxMemoryItems: 1000,
       enableRedis: process.env.CACHE_ENABLED === 'true',
-      redisUrl: process.env.REDIS_URL,
+      redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
       ...config,
     };
 
@@ -49,7 +49,8 @@ class CacheService {
       await this.redis.ping();
       console.log('📦 缓存服务启动 (Redis + 内存模式)');
     } catch (error) {
-      console.warn('⚠️ Redis连接失败，使用内存缓存:', error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn('⚠️ Redis连接失败，使用内存缓存:', errorMessage);
       this.redis = null;
     }
   }
@@ -121,7 +122,8 @@ class CacheService {
           return parsed as T;
         }
       } catch (error) {
-        console.warn('⚠️ Redis读取失败:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('⚠️ Redis读取失败:', errorMessage);
       }
     }
 
@@ -143,7 +145,8 @@ class CacheService {
       try {
         await this.redis.setex(key, ttl, JSON.stringify(data));
       } catch (error) {
-        console.warn('⚠️ Redis写入失败:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('⚠️ Redis写入失败:', errorMessage);
       }
     }
   }
@@ -157,7 +160,8 @@ class CacheService {
       try {
         await this.redis.del(key);
       } catch (error) {
-        console.warn('⚠️ Redis删除失败:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('⚠️ Redis删除失败:', errorMessage);
       }
     }
   }
@@ -178,7 +182,8 @@ class CacheService {
             await this.redis.del(...keys);
           }
         } catch (error) {
-          console.warn('⚠️ Redis批量删除失败:', error.message);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('⚠️ Redis批量删除失败:', errorMessage);
         }
       }
     } else {
@@ -189,7 +194,8 @@ class CacheService {
         try {
           await this.redis.flushdb();
         } catch (error) {
-          console.warn('⚠️ Redis清空失败:', error.message);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('⚠️ Redis清空失败:', errorMessage);
         }
       }
     }

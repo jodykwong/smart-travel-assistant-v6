@@ -122,7 +122,8 @@ export class EnvironmentManager {
       return AppConfigSchema.parse(rawConfig);
     } catch (error) {
       console.error('❌ 配置加载失败:', error);
-      throw new Error(`环境配置无效: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`环境配置无效: ${errorMessage}`);
     }
   }
 

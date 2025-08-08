@@ -54,47 +54,27 @@ export class LangGraphPlanningEngine {
   // ============= 状态图构建 =============
 
   private buildStateGraph(): StateGraph<TravelPlanningState> {
-    const graph = new StateGraph<TravelPlanningState>({
-      channels: {
-        sessionId: { value: null },
-        destination: { value: null },
-        totalDays: { value: null },
-        startDate: { value: null },
-        endDate: { value: null },
-        userPreferences: { value: null },
-        regions: { value: [] },
-        currentRegionIndex: { value: 0 },
-        currentPhase: { value: 'analyze_complexity' },
-        realData: { value: {} },
-        regionPlans: { value: {} },
-        progress: { value: 0 },
-        errors: { value: [] },
-        retryCount: { value: 0 },
-        qualityScore: { value: 0 },
-        tokensUsed: { value: 0 },
-        tokensRemaining: { value: 20000 },
-      },
-    });
+    const graph = new StateGraph<TravelPlanningState>({} as any);
 
-    // 添加节点
-    graph.addNode('analyze_complexity', this.analyzeComplexity.bind(this));
-    graph.addNode('region_decomposition', this.regionDecomposition.bind(this));
-    graph.addNode('collect_data', this.collectData.bind(this));
-    graph.addNode('plan_region', this.planRegion.bind(this));
-    graph.addNode('validate_region', this.validateRegion.bind(this));
-    graph.addNode('merge_regions', this.mergeRegions.bind(this));
-    graph.addNode('optimize_transitions', this.optimizeTransitions.bind(this));
-    graph.addNode('generate_output', this.generateOutput.bind(this));
+    // 添加节点（使用类型断言）
+    (graph as any).addNode('analyze_complexity', this.analyzeComplexity.bind(this));
+    (graph as any).addNode('region_decomposition', this.regionDecomposition.bind(this));
+    (graph as any).addNode('collect_data', this.collectData.bind(this));
+    (graph as any).addNode('plan_region', this.planRegion.bind(this));
+    (graph as any).addNode('validate_region', this.validateRegion.bind(this));
+    (graph as any).addNode('merge_regions', this.mergeRegions.bind(this));
+    (graph as any).addNode('optimize_transitions', this.optimizeTransitions.bind(this));
+    (graph as any).addNode('generate_output', this.generateOutput.bind(this));
 
-    // 设置入口点
-    graph.setEntryPoint('analyze_complexity');
+    // 设置入口点（使用类型断言）
+    (graph as any).setEntryPoint('analyze_complexity');
 
-    // 添加边
-    graph.addEdge('analyze_complexity', 'region_decomposition');
-    graph.addEdge('region_decomposition', 'collect_data');
+    // 添加边（使用类型断言）
+    (graph as any).addEdge('analyze_complexity', 'region_decomposition');
+    (graph as any).addEdge('region_decomposition', 'collect_data');
     
-    // 条件边：数据收集后的路由
-    graph.addConditionalEdges(
+    // 条件边：数据收集后的路由（使用类型断言）
+    (graph as any).addConditionalEdges(
       'collect_data',
       this.routeAfterDataCollection.bind(this),
       {
@@ -103,10 +83,10 @@ export class LangGraphPlanningEngine {
       }
     );
     
-    graph.addEdge('plan_region', 'validate_region');
-    
-    // 条件边：验证后的路由
-    graph.addConditionalEdges(
+    (graph as any).addEdge('plan_region', 'validate_region');
+
+    // 条件边：验证后的路由（使用类型断言）
+    (graph as any).addConditionalEdges(
       'validate_region',
       this.routeAfterValidation.bind(this),
       {
@@ -115,10 +95,10 @@ export class LangGraphPlanningEngine {
         'merge_regions': 'merge_regions', // 继续合并
       }
     );
-    
-    graph.addEdge('merge_regions', 'optimize_transitions');
-    graph.addEdge('optimize_transitions', 'generate_output');
-    graph.addEdge('generate_output', END);
+
+    (graph as any).addEdge('merge_regions', 'optimize_transitions');
+    (graph as any).addEdge('optimize_transitions', 'generate_output');
+    (graph as any).addEdge('generate_output', END);
 
     return graph;
   }
@@ -204,6 +184,11 @@ export class LangGraphPlanningEngine {
 
   private async planRegion(state: TravelPlanningState): Promise<TravelPlanningState> {
     const currentRegion = state.regions[state.currentRegionIndex];
+
+    if (!currentRegion) {
+      throw new Error(`No region found at index: ${state.currentRegionIndex}`);
+    }
+
     const regionData = state.realData[currentRegion.name];
 
     if (!regionData) {
@@ -214,11 +199,21 @@ export class LangGraphPlanningEngine {
 
     try {
       // 使用AI生成区域规划
+      const planningContext: any = {
+        userPreferences: state.userPreferences || {},
+        regionData: regionData,
+        regionName: currentRegion.name,
+        constraints: {
+          timeLimit: currentRegion.estimatedDays || 3,
+          ...(state.userPreferences?.budget && { budgetLimit: 1000 })
+        }
+      };
+
       const regionPlan = await this.regionPlanner.generateRegionPlan(
-        currentRegion,
-        regionData,
-        state.userPreferences,
-        this.config.maxTokens / state.regions.length // Token分片
+        planningContext,
+        {
+          maxDays: currentRegion.estimatedDays || 3
+        }
       );
 
       const updatedRegionPlans = {
@@ -253,7 +248,16 @@ export class LangGraphPlanningEngine {
 
   private async validateRegion(state: TravelPlanningState): Promise<TravelPlanningState> {
     const currentRegion = state.regions[state.currentRegionIndex];
+
+    if (!currentRegion) {
+      throw new Error(`No region found at index: ${state.currentRegionIndex}`);
+    }
+
     const regionPlan = state.regionPlans[currentRegion.name];
+
+    if (!regionPlan) {
+      throw new Error(`No plan found for region: ${currentRegion.name}`);
+    }
 
     await this.updateProgress(state, 'validate_region', 70 + state.currentRegionIndex * 5);
 
@@ -292,16 +296,34 @@ export class LangGraphPlanningEngine {
     await this.updateProgress(state, 'merge_regions', 85);
 
     // 合并所有区域规划
-    const masterPlan = await this.planMerger.mergeRegionPlans(
-      Object.values(state.regionPlans),
-      state
+    const regionPlansArray = Object.values(state.regionPlans);
+    const masterPlan = await this.planMerger.mergePlans(
+      regionPlansArray,
+      state.userPreferences || {},
+      {
+        optimizeRoute: true,
+        balanceBudget: true,
+        considerTransportation: true
+      }
     );
+
+    const newErrors: ProcessingError[] = masterPlan.errors ?
+      masterPlan.errors.map(err => ({
+        type: 'MERGE_ERROR',
+        message: typeof err === 'string' ? err : err,
+        context: 'merge_regions',
+        retryable: true,
+        userFriendly: true,
+        timestamp: new Date().toISOString(),
+        severity: 'MEDIUM' as const
+      })) : [];
 
     return {
       ...state,
-      masterPlan,
+      masterPlan: masterPlan.success ? masterPlan.plan : null,
       currentPhase: 'optimize_transitions',
       progress: 90,
+      errors: [...(state.errors || []), ...newErrors]
     };
   }
 
@@ -335,6 +357,11 @@ export class LangGraphPlanningEngine {
 
   private routeAfterDataCollection(state: TravelPlanningState): string {
     const currentRegion = state.regions[state.currentRegionIndex];
+
+    if (!currentRegion) {
+      return 'merge_regions'; // 如果没有当前区域，直接合并
+    }
+
     const hasData = state.realData[currentRegion.name];
     
     if (hasData) {
@@ -349,6 +376,11 @@ export class LangGraphPlanningEngine {
 
   private routeAfterValidation(state: TravelPlanningState): string {
     const currentRegion = state.regions[state.currentRegionIndex];
+
+    if (!currentRegion) {
+      return 'merge_regions'; // 如果没有当前区域，直接合并
+    }
+
     const regionPlan = state.regionPlans[currentRegion.name];
     
     if (!regionPlan || regionPlan.qualityScore < 0.6) {
@@ -431,11 +463,12 @@ export class LangGraphPlanningEngine {
 
     // 广播进度更新
     await broadcastProgress(this.config.sessionId, {
-      sessionId: this.config.sessionId,
-      phase,
-      progress,
-      currentRegion: state.regions[state.currentRegionIndex]?.name,
+      step: phase,
+      percentage: progress,
       message: this.getPhaseMessage(phase),
+      details: {
+        currentRegion: state.regions[state.currentRegionIndex]?.name
+      }
     });
   }
 
@@ -467,7 +500,7 @@ export class LangGraphPlanningEngine {
   async startPlanning(initialState: TravelPlanningState): Promise<void> {
     try {
       const compiledGraph = this.stateGraph.compile();
-      await compiledGraph.invoke(initialState);
+      await (compiledGraph as any).invoke(initialState);
     } catch (error) {
       console.error('LangGraph planning failed:', error);
       throw error;

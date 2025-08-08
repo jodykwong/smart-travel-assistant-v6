@@ -4,11 +4,12 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * 智游助手v6.0 全局测试设置
+ * 智游助手v6.2 全局测试设置
  * 在所有测试开始前执行的初始化工作
+ * 重点验证P0级关键功能（用户认证系统和支付系统安全加固）
  */
 async function globalSetup(config: FullConfig) {
-  console.log('🚀 开始智游助手v6.0全自动测试套件');
+  console.log('🚀 开始智游助手v6.2端到端测试套件 - P0级关键功能验证');
   console.log('============================================================');
 
   const setupResults = {

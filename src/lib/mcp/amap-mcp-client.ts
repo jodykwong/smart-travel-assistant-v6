@@ -106,9 +106,9 @@ export class AmapMCPClient implements AmapMCPTools {
 
   // ============= 核心MCP调用方法 =============
 
-  private async callMCP<T>(request: MCPRequest): Promise<MCPResponse<T>> {
+  private async callMCP<T>(request: any): Promise<any> {
     try {
-      const response = await fetch(`${this.mcpServerUrl}/tools/call`, {
+      const response = await fetch(`${this.config.url}/tools/call`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ export class AmapMCPClient implements AmapMCPTools {
   // ============= 高德MCP工具实现 =============
 
   async searchPOI(query: string, region: string, category?: string): Promise<POIData[]> {
-    const request: MCPRequest = {
+    const request: any = {
       method: 'amap_search_poi',
       params: {
         keywords: query,
@@ -174,7 +174,7 @@ export class AmapMCPClient implements AmapMCPTools {
   }
 
   async getWeather(location: string, date?: string): Promise<WeatherData> {
-    const request: MCPRequest = {
+    const request: any = {
       method: 'amap_get_weather',
       params: {
         location: location,
@@ -199,7 +199,7 @@ export class AmapMCPClient implements AmapMCPTools {
     to: string, 
     mode: 'driving' | 'walking' | 'transit' = 'driving'
   ): Promise<TransportationData> {
-    const request: MCPRequest = {
+    const request: any = {
       method: 'amap_plan_route',
       params: {
         origin: from,
@@ -221,7 +221,7 @@ export class AmapMCPClient implements AmapMCPTools {
   }
 
   async analyzeRegion(region: string, preferences: UserPreferences): Promise<RegionAnalysis> {
-    const request: MCPRequest = {
+    const request: any = {
       method: 'amap_analyze_region',
       params: {
         region: region,
@@ -269,10 +269,10 @@ export class AmapMCPClient implements AmapMCPTools {
         transportation: this.getDefaultTransportationData(),
         dataQuality: this.calculateDataQuality({
           attractions: attractions.status === 'fulfilled',
-          restaurants: restaurants.status === 'fulfilled', 
+          restaurants: restaurants.status === 'fulfilled',
           hotels: hotels.status === 'fulfilled',
           weather: weather.status === 'fulfilled',
-        }),
+        }) as any,
         lastUpdated: new Date().toISOString(),
       };
 
@@ -281,7 +281,7 @@ export class AmapMCPClient implements AmapMCPTools {
 
     } catch (error) {
       console.error(`❌ ${regionName}数据收集失败:`, error);
-      throw new Error(`区域数据收集失败: ${error.message}`);
+      throw new Error(`区域数据收集失败: ${(error as Error).message}`);
     }
   }
 
@@ -398,7 +398,7 @@ export class AmapMCPClient implements AmapMCPTools {
 
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.mcpServerUrl}/health`, {
+      const response = await fetch(`${this.config.url}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000),
       });

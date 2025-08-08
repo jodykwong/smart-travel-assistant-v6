@@ -1,0 +1,336 @@
+# 智游助手v6.2 Kubernetes部署模板
+# Week 3-4: 多环境部署配置
+# 集成现有监控系统
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}
+  namespace: ${KUBE_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+    version: "${APP_VERSION}"
+    environment: "${ENVIRONMENT}"
+spec:
+  replicas: ${REPLICAS:-3}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  selector:
+    matchLabels:
+      app: ${APP_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${APP_NAME}
+        version: "${APP_VERSION}"
+        environment: "${ENVIRONMENT}"
+      annotations:
+        # Prometheus监控注解
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/api/metrics"
+        # 部署信息注解
+        deployment.kubernetes.io/revision: "${CI_PIPELINE_ID}"
+        deployment.kubernetes.io/timestamp: "${CI_PIPELINE_CREATED_AT}"
+    spec:
+      containers:
+      - name: ${APP_NAME}
+        image: ${IMAGE_NAME}:${CI_COMMIT_SHA}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        
+        # 环境变量配置
+        env:
+        - name: NODE_ENV
+          value: "${NODE_ENV:-production}"
+        - name: PORT
+          value: "3000"
+        - name: APP_VERSION
+          value: "${APP_VERSION}"
+        - name: CI_COMMIT_SHA
+          value: "${CI_COMMIT_SHA}"
+        
+        # 监控系统环境变量
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: MONITORING_INTERVAL
+          value: "${MONITORING_INTERVAL:-15000}"
+        - name: PROMETHEUS_ENDPOINT
+          value: "/api/metrics"
+        - name: HEALTH_CHECK_ENDPOINT
+          value: "/api/health"
+        
+        # 数据库配置
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-secrets
+              key: redis-url
+        
+        # 外部服务配置
+        - name: AMAP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-secrets
+              key: amap-api-key
+        - name: PAYMENT_GATEWAY_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ${APP_NAME}-config
+              key: payment-gateway-url
+        
+        # 健康检查配置
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /api/ready
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # 启动探针（防止慢启动被杀死）
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 30
+        
+        # 资源配置
+        resources:
+          requests:
+            memory: "${MEMORY_REQUEST:-512Mi}"
+            cpu: "${CPU_REQUEST:-500m}"
+          limits:
+            memory: "${MEMORY_LIMIT:-1Gi}"
+            cpu: "${CPU_LIMIT:-1000m}"
+        
+        # 安全上下文
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # 卷挂载
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.next/cache
+        - name: logs
+          mountPath: /app/logs
+      
+      # 卷定义
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      # Pod安全上下文
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # 镜像拉取密钥
+      imagePullSecrets:
+      - name: harbor-registry-secret
+      
+      # 节点选择器（可选）
+      nodeSelector:
+        kubernetes.io/os: linux
+      
+      # 容忍度（可选）
+      tolerations:
+      - key: "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+      - key: "node.kubernetes.io/unreachable"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${APP_NAME}
+  namespace: ${KUBE_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+    version: "${APP_VERSION}"
+    environment: "${ENVIRONMENT}"
+  annotations:
+    # Prometheus监控注解
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+    prometheus.io/path: "/api/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: ${APP_NAME}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${APP_NAME}
+  namespace: ${KUBE_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+    version: "${APP_VERSION}"
+    environment: "${ENVIRONMENT}"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # 速率限制
+    nginx.ingress.kubernetes.io/rate-limit: "${RATE_LIMIT:-100}"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # 超时配置
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # 缓存配置
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "4k"
+    # CORS配置
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "${CORS_ALLOW_ORIGIN:-*}"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+spec:
+  tls:
+  - hosts:
+    - ${INGRESS_HOST}
+    secretName: ${APP_NAME}-tls
+  rules:
+  - host: ${INGRESS_HOST}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${APP_NAME}
+            port:
+              number: 3000
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${APP_NAME}-config
+  namespace: ${KUBE_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+    version: "${APP_VERSION}"
+    environment: "${ENVIRONMENT}"
+data:
+  # 应用配置
+  NODE_ENV: "${NODE_ENV:-production}"
+  LOG_LEVEL: "${LOG_LEVEL:-info}"
+  
+  # 监控配置
+  METRICS_ENABLED: "true"
+  MONITORING_INTERVAL: "${MONITORING_INTERVAL:-15000}"
+  PROMETHEUS_ENDPOINT: "/api/metrics"
+  HEALTH_CHECK_ENDPOINT: "/api/health"
+  
+  # 外部服务配置
+  payment-gateway-url: "${PAYMENT_GATEWAY_URL}"
+  amap-api-base-url: "https://restapi.amap.com"
+  
+  # 缓存配置
+  CACHE_TTL: "${CACHE_TTL:-3600}"
+  CACHE_MAX_SIZE: "${CACHE_MAX_SIZE:-1000}"
+
+---
+# HorizontalPodAutoscaler（生产环境）
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${APP_NAME}-hpa
+  namespace: ${KUBE_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+    version: "${APP_VERSION}"
+    environment: "${ENVIRONMENT}"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${APP_NAME}
+  minReplicas: ${MIN_REPLICAS:-2}
+  maxReplicas: ${MAX_REPLICAS:-10}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60

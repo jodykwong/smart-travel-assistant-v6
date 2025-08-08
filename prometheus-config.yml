@@ -1,0 +1,57 @@
+# 智游助手v6.2 Prometheus配置
+# 集成应用监控和支付系统专项监控
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# 告警管理器配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# 规则文件
+rule_files: []
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # 智游助手v6.2测试监控端点
+  - job_name: 'smart-travel-test'
+    static_configs:
+      - targets: ['192.168.147.1:3003']  # 测试服务器端口3003
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smart-travel-test'
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'smart-travel-v6.2-test'
+
+  # 智游助手v6.2应用监控（预留，当真实应用启动时使用）
+  - job_name: 'smart-travel-app'
+    static_configs:
+      - targets: ['192.168.147.1:3001']  # 应用端口3001
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /api/metrics
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smart-travel-app'
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'smart-travel-v6.2'

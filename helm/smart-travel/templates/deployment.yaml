@@ -1,0 +1,175 @@
+# 智游助手v6.2 Deployment模板
+# Week 5-6: CD Pipeline构建 - Helm标准化部署
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "smart-travel.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+  annotations:
+    # 部署信息注解
+    deployment.kubernetes.io/revision: "{{ .Values.app.version }}"
+    deployment.kubernetes.io/timestamp: "{{ now | date "2006-01-02T15:04:05Z" }}"
+    # 监控注解（集成现有监控系统）
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.app.port }}"
+    prometheus.io/path: "{{ .Values.app.env.PROMETHEUS_ENDPOINT }}"
+    # 支付系统保护注解
+    {{- if .Values.deployment.paymentProtection.enabled }}
+    payment.smarttravel.com/protection: "enabled"
+    payment.smarttravel.com/strategy: "{{ .Values.deployment.paymentProtection.strategy }}"
+    payment.smarttravel.com/monitoring: "{{ .Values.deployment.paymentProtection.monitoring }}"
+    {{- end }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  strategy:
+    type: {{ .Values.deployment.strategy }}
+    {{- if eq .Values.deployment.strategy "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deployment.maxUnavailable }}
+      maxSurge: {{ .Values.deployment.maxSurge }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "smart-travel.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "smart-travel.selectorLabels" . | nindent 8 }}
+        version: "{{ .Values.app.version }}"
+      annotations:
+        # Prometheus监控注解
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.app.port }}"
+        prometheus.io/path: "{{ .Values.app.env.PROMETHEUS_ENDPOINT }}"
+        # 配置校验和（触发重新部署）
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "smart-travel.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.global.security | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.imageProject }}/{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.app.port }}
+          protocol: TCP
+        
+        # 环境变量配置
+        env:
+        {{- range $key, $value := .Values.app.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        # 从ConfigMap获取配置
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "smart-travel.fullname" . }}-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "smart-travel.fullname" . }}-config
+              key: LOG_LEVEL
+        # 从Secret获取敏感配置
+        {{- if .Values.secrets.enabled }}
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "smart-travel.fullname" . }}-secret
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "smart-travel.fullname" . }}-secret
+              key: REDIS_URL
+        - name: AMAP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "smart-travel.fullname" . }}-secret
+              key: AMAP_API_KEY
+        {{- end }}
+        
+        # 健康检查配置
+        {{- if .Values.app.healthCheck.enabled }}
+        livenessProbe:
+          {{- toYaml .Values.app.healthCheck.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.app.healthCheck.readinessProbe | nindent 10 }}
+        startupProbe:
+          {{- toYaml .Values.app.healthCheck.startupProbe | nindent 10 }}
+        {{- end }}
+        
+        # 资源配置
+        resources:
+          {{- toYaml .Values.app.resources | nindent 10 }}
+        
+        # 安全上下文
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: {{ .Values.global.security.runAsUser }}
+          runAsGroup: {{ .Values.global.security.runAsUser }}
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # 卷挂载
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.next/cache
+        - name: logs
+          mountPath: /app/logs
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          mountPath: /app/data
+        {{- end }}
+      
+      # 卷定义
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      {{- if .Values.persistence.enabled }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "smart-travel.fullname" . }}-pvc
+      {{- end }}
+      
+      # 节点选择器
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      # 亲和性配置
+      {{- if .Values.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          {{- if .Values.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution | nindent 10 }}
+          {{- end }}
+      {{- end }}
+      
+      # 容忍度
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

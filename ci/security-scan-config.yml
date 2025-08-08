@@ -1,0 +1,253 @@
+# 智游助手v6.2 安全扫描配置
+# Week 3-4: 安全扫描集成
+
+# Trivy配置
+trivy:
+  # 扫描类型
+  scan_types:
+    - vuln      # 漏洞扫描
+    - config    # 配置扫描
+    - secret    # 密钥扫描
+    - license   # 许可证扫描
+  
+  # 严重性级别
+  severity_levels:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+    - LOW
+  
+  # 忽略的漏洞ID
+  ignore_vulnerabilities:
+    # 示例：暂时忽略的低风险漏洞
+    # - CVE-2021-44906
+  
+  # 扫描目标
+  targets:
+    filesystem:
+      - "."
+      - "src/"
+      - "package.json"
+      - "package-lock.json"
+    
+    docker_images:
+      - "node:18-alpine"
+      - "${IMAGE_NAME}:${CI_COMMIT_SHA}"
+  
+  # 输出格式
+  output_formats:
+    - json
+    - sarif
+    - table
+  
+  # 报告配置
+  reports:
+    vulnerability_report: "reports/trivy-vuln.json"
+    config_report: "reports/trivy-config.json"
+    secret_report: "reports/trivy-secret.json"
+    license_report: "reports/trivy-license.json"
+
+# npm audit配置
+npm_audit:
+  # 审计级别
+  audit_levels:
+    - critical
+    - high
+    - moderate
+  
+  # 阻止部署的级别
+  blocking_levels:
+    - critical
+    - high
+  
+  # 忽略的漏洞
+  ignore_advisories: []
+  
+  # 报告配置
+  reports:
+    json_report: "reports/npm-audit.json"
+    summary_report: "reports/npm-audit-summary.txt"
+
+# 代码安全扫描配置
+code_security:
+  # ESLint安全插件配置
+  eslint_security:
+    config_file: ".eslintrc.security.js"
+    output_format: "json"
+    report_file: "reports/eslint-security.json"
+  
+  # 敏感信息检测
+  secret_detection:
+    patterns:
+      - name: "API Keys"
+        regex: "(?i)(api[_-]?key|apikey)\\s*[:=]\\s*['\"]?([a-zA-Z0-9_-]{20,})['\"]?"
+      
+      - name: "Database URLs"
+        regex: "(?i)(database[_-]?url|db[_-]?url)\\s*[:=]\\s*['\"]?([^'\"\\s]+)['\"]?"
+      
+      - name: "JWT Secrets"
+        regex: "(?i)(jwt[_-]?secret|token[_-]?secret)\\s*[:=]\\s*['\"]?([a-zA-Z0-9_-]{32,})['\"]?"
+      
+      - name: "Private Keys"
+        regex: "-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----"
+      
+      - name: "AWS Keys"
+        regex: "(?i)(aws[_-]?access[_-]?key|aws[_-]?secret)\\s*[:=]\\s*['\"]?([A-Z0-9]{20})['\"]?"
+      
+      - name: "Generic Passwords"
+        regex: "(?i)(password|passwd|pwd)\\s*[:=]\\s*['\"]?([^'\"\\s]{8,})['\"]?"
+    
+    # 扫描目录
+    scan_directories:
+      - "src/"
+      - "ci/"
+      - "scripts/"
+    
+    # 忽略的文件
+    ignore_files:
+      - "*.test.ts"
+      - "*.spec.ts"
+      - "*.md"
+      - "package-lock.json"
+    
+    # 报告文件
+    report_file: "reports/secret-detection.json"
+
+# 许可证合规检查
+license_compliance:
+  # 允许的许可证
+  allowed_licenses:
+    - "MIT"
+    - "Apache-2.0"
+    - "BSD-2-Clause"
+    - "BSD-3-Clause"
+    - "ISC"
+    - "CC0-1.0"
+  
+  # 禁止的许可证
+  forbidden_licenses:
+    - "GPL-2.0"
+    - "GPL-3.0"
+    - "AGPL-1.0"
+    - "AGPL-3.0"
+    - "LGPL-2.0"
+    - "LGPL-2.1"
+    - "LGPL-3.0"
+  
+  # 需要审查的许可证
+  review_required_licenses:
+    - "Apache-1.1"
+    - "MPL-2.0"
+    - "EPL-1.0"
+    - "EPL-2.0"
+  
+  # 报告文件
+  report_file: "reports/license-compliance.json"
+
+# 容器安全配置
+container_security:
+  # 基础镜像安全检查
+  base_image_security:
+    allowed_base_images:
+      - "node:18-alpine"
+      - "nginx:alpine"
+      - "postgres:15-alpine"
+      - "redis:7-alpine"
+    
+    # 禁止的基础镜像
+    forbidden_base_images:
+      - "node:latest"
+      - "ubuntu:latest"
+      - "*:latest"
+  
+  # Dockerfile安全检查
+  dockerfile_security:
+    rules:
+      - name: "No root user"
+        check: "USER instruction should not use root"
+      
+      - name: "No ADD instruction"
+        check: "Use COPY instead of ADD"
+      
+      - name: "No latest tag"
+        check: "Do not use latest tag"
+      
+      - name: "Health check required"
+        check: "HEALTHCHECK instruction should be present"
+  
+  # 运行时安全配置
+  runtime_security:
+    # 安全上下文
+    security_context:
+      run_as_non_root: true
+      read_only_root_filesystem: true
+      allow_privilege_escalation: false
+    
+    # 资源限制
+    resource_limits:
+      memory: "512Mi"
+      cpu: "500m"
+    
+    # 网络策略
+    network_policies:
+      ingress_rules:
+        - from_namespaces: ["smart-travel-staging", "smart-travel-production"]
+        - from_pods: ["monitoring"]
+      
+      egress_rules:
+        - to_services: ["database", "redis", "external-apis"]
+
+# 支付系统特殊安全配置
+payment_security:
+  # PCI DSS合规检查
+  pci_compliance:
+    # 数据加密检查
+    encryption_checks:
+      - "Credit card data encryption"
+      - "PII data encryption"
+      - "Database encryption at rest"
+      - "Network encryption in transit"
+    
+    # 访问控制检查
+    access_control_checks:
+      - "Multi-factor authentication"
+      - "Role-based access control"
+      - "Audit logging"
+      - "Session management"
+  
+  # 支付数据安全
+  payment_data_security:
+    # 敏感数据检测
+    sensitive_data_patterns:
+      - name: "Credit Card Numbers"
+        regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\\b"
+      
+      - name: "CVV Codes"
+        regex: "\\b[0-9]{3,4}\\b"
+      
+      - name: "Bank Account Numbers"
+        regex: "\\b[0-9]{8,17}\\b"
+    
+    # 报告文件
+    report_file: "reports/payment-security.json"
+
+# 报告聚合配置
+reporting:
+  # 聚合报告
+  aggregate_report:
+    file: "reports/security-summary.json"
+    format: "json"
+  
+  # 阈值配置
+  thresholds:
+    critical_vulnerabilities: 0
+    high_vulnerabilities: 0
+    medium_vulnerabilities: 10
+    low_vulnerabilities: 50
+  
+  # 通知配置
+  notifications:
+    slack_webhook: "${SLACK_SECURITY_WEBHOOK}"
+    email_recipients:
+      - "security@smarttravel.com"
+      - "devops@smarttravel.com"

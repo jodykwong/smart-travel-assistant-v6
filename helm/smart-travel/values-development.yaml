@@ -1,0 +1,183 @@
+# 智游助手v6.2 开发环境配置
+# Week 5-6: CD Pipeline构建 - 开发环境特定配置
+
+# 继承默认配置，覆盖开发环境特定设置
+
+# 应用配置
+app:
+  replicaCount: 1  # 开发环境单副本
+  
+  # 环境变量
+  env:
+    NODE_ENV: development
+    LOG_LEVEL: debug
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "5000"  # 开发环境更频繁的监控
+  
+  # 资源配置（开发环境较小）
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # 健康检查配置（开发环境更宽松）
+  healthCheck:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readinessProbe:
+      httpGet:
+        path: /api/ready
+        port: 3000
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 5
+
+# Ingress配置
+ingress:
+  enabled: true
+  hosts:
+    - host: dev.smarttravel.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: dev-smart-travel-tls
+      hosts:
+        - dev.smarttravel.local
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "1000"  # 开发环境更宽松的限制
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+
+# 自动扩缩容（开发环境禁用）
+autoscaling:
+  enabled: false
+
+# 存储配置（开发环境较小）
+persistence:
+  enabled: true
+  size: 5Gi
+
+# 配置映射
+configMap:
+  enabled: true
+  data:
+    NODE_ENV: development
+    LOG_LEVEL: debug
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "5000"
+    PROMETHEUS_ENDPOINT: "/api/metrics"
+    HEALTH_CHECK_ENDPOINT: "/api/health"
+    AMAP_API_BASE_URL: "https://restapi.amap.com"
+    CACHE_TTL: "1800"  # 开发环境较短的缓存时间
+    CACHE_MAX_SIZE: "500"
+
+# 依赖服务配置
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "dev_postgres123"
+    username: "smart_travel_dev"
+    password: "dev_smart_travel123"
+    database: "smart_travel_dev"
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi  # 开发环境较小
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "dev_redis123"
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi  # 开发环境较小
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+
+# 监控配置
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 15s  # 开发环境更频繁的监控
+      path: /api/metrics
+      labels:
+        app: smart-travel-assistant
+        environment: development
+  
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
+  
+  alerts:
+    enabled: true
+    rules:
+      - alert: DevSmartTravelAppDown
+        expr: up{job="smart-travel-assistant-dev"} == 0
+        for: 2m  # 开发环境更宽松的告警
+        labels:
+          severity: warning  # 开发环境降低告警级别
+          environment: development
+        annotations:
+          summary: "开发环境智游助手应用不可用"
+          description: "开发环境智游助手应用已经下线超过2分钟"
+
+# 网络策略（开发环境更宽松）
+networkPolicy:
+  enabled: false  # 开发环境禁用网络策略
+
+# Pod中断预算（开发环境禁用）
+podDisruptionBudget:
+  enabled: false
+
+# 支付系统保护（开发环境禁用）
+deployment:
+  paymentProtection:
+    enabled: false  # 开发环境不需要蓝绿部署
+
+# 安全配置（开发环境较宽松）
+global:
+  security:
+    enabled: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+# Pod安全策略（开发环境较宽松）
+podSecurityPolicy:
+  enabled: false  # 开发环境禁用PSP
+
+# 节点亲和性（开发环境不限制）
+nodeAffinity:
+  enabled: false
+
+# Pod反亲和性（开发环境不需要）
+podAntiAffinity:
+  enabled: false

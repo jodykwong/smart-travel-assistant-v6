@@ -91,7 +91,7 @@ class DeepSeekCacheService {
 
   private extractDays(content: string): number {
     const dayMatch = content.match(/(\d+)\s*天/);
-    return dayMatch ? parseInt(dayMatch[1]) : 0;
+    return dayMatch ? parseInt(dayMatch[1] || '0') : 0;
   }
 
   private extractBudget(content: string): string {
@@ -271,7 +271,8 @@ class DeepSeekCacheService {
         await this.smartCache(query);
         console.log('✅ 预热查询完成');
       } catch (error) {
-        console.warn('⚠️ 预热查询失败:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('⚠️ 预热查询失败:', errorMessage);
       }
     }
     

@@ -17,6 +17,48 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.phase3a
+.env.production
+.env.staging
+
+# Phase 3A 敏感配置
+database.config.local.ts
+database.config.production.ts
+
+# 证书和密钥文件
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
+certificates/
+keys/
+apiclient_cert.pem
+apiclient_key.pem
+apiclient_cert.p12
+alipay_private_key.pem
+alipay_public_key.pem
+
+# 支付测试数据
+payment-test-data/
+test-orders/
+test-transactions/
+user-data/
+uploads/
+user-uploads/
+
+# 安全扫描结果
+security-scan-results/
+vulnerability-reports/
+*.sarif
+.snyk
+
+# 本地数据库文件
+data/
+*.db
+sessions.db
+security-check-report.md
 
 # Testing
 coverage/
@@ -178,3 +220,11 @@ playwright-report/
 *.njsproj
 *.sln
 *.sw?
+
+# 商业化开发相关文件
+commercial-config/
+api-keys/
+production-secrets/
+deployment-logs/
+infrastructure_deployment_*.log
+P0_EXECUTION_*.log

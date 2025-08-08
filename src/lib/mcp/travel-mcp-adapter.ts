@@ -101,12 +101,13 @@ export class TravelMCPAdapter {
         hotels: hotels.status === 'fulfilled' ? hotels.value : [],
         weather: weather.status === 'fulfilled' ? weather.value : this.getDefaultWeather(),
         transportation: { flights: [], trains: [], buses: [] }, // 暂时为空
-        dataQuality: 0, // 稍后计算
+        dataQuality: 0 as any, // 稍后计算
         lastUpdated: new Date().toISOString(),
       };
 
       // 计算数据质量
-      regionData.dataQuality = this.calculateDataQuality(regionData);
+      const calculatedQuality = this.calculateDataQuality(regionData);
+      (regionData as any).dataQuality = calculatedQuality;
 
       // 缓存数据
       if (opts.cacheEnabled) {
@@ -118,7 +119,7 @@ export class TravelMCPAdapter {
 
     } catch (error) {
       console.error(`❌ ${region.name}数据收集失败:`, error);
-      throw new Error(`区域数据收集失败: ${error.message}`);
+      throw new Error(`区域数据收集失败: ${(error as Error).message}`);
     }
   }
 

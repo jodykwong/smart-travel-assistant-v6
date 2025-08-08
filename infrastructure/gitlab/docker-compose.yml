@@ -1,0 +1,144 @@
+# GitLab CE 部署配置
+# 智游助手v6.2 CI/CD基础设施
+
+version: '3.8'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:16.5.0-ce.0
+    container_name: smart-travel-gitlab
+    restart: always
+    hostname: 'gitlab.smarttravel.local'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # 基础配置
+        external_url 'https://gitlab.smarttravel.local'
+        
+        # SSL配置
+        nginx['redirect_http_to_https'] = true
+        nginx['ssl_certificate'] = "/etc/gitlab/ssl/gitlab.crt"
+        nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/gitlab.key"
+        
+        # GitLab配置
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['time_zone'] = 'Asia/Shanghai'
+        
+        # 数据库配置
+        postgresql['enable'] = true
+        postgresql['shared_preload_libraries'] = 'pg_stat_statements'
+        postgresql['max_connections'] = 200
+        postgresql['work_mem'] = '16MB'
+        
+        # Redis配置
+        redis['enable'] = true
+        redis['maxmemory'] = '256mb'
+        redis['maxmemory_policy'] = 'allkeys-lru'
+        
+        # 邮件配置
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "smtp.qq.com"
+        gitlab_rails['smtp_port'] = 587
+        gitlab_rails['smtp_user_name'] = "smarttravel@qq.com"
+        gitlab_rails['smtp_password'] = "your_smtp_password"
+        gitlab_rails['smtp_domain'] = "qq.com"
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = false
+        gitlab_rails['gitlab_email_from'] = 'smarttravel@qq.com'
+        
+        # 备份配置
+        gitlab_rails['backup_keep_time'] = 604800
+        gitlab_rails['backup_path'] = "/var/opt/gitlab/backups"
+        
+        # 监控集成
+        prometheus['enable'] = true
+        prometheus['listen_address'] = '0.0.0.0:9090'
+        node_exporter['enable'] = true
+        redis_exporter['enable'] = true
+        postgres_exporter['enable'] = true
+        
+        # 性能优化
+        unicorn['worker_processes'] = 3
+        sidekiq['max_concurrency'] = 25
+        
+        # 安全配置
+        gitlab_rails['webhook_timeout'] = 10
+        gitlab_rails['max_request_duration_seconds'] = 57
+        
+    ports:
+      - '80:80'
+      - '443:443'
+      - '2222:22'
+      - '9090:9090'  # Prometheus metrics
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+      - ./ssl:/etc/gitlab/ssl:ro
+    networks:
+      - gitlab_network
+    shm_size: '256m'
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:v16.5.0
+    container_name: smart-travel-gitlab-runner
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab_runner_config:/etc/gitlab-runner
+    networks:
+      - gitlab_network
+    depends_on:
+      - gitlab
+
+  # Redis外部实例（用于缓存和会话）
+  redis:
+    image: redis:7-alpine
+    container_name: smart-travel-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - gitlab_network
+
+  # PostgreSQL外部实例（用于应用数据）
+  postgres:
+    image: postgres:15-alpine
+    container_name: smart-travel-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: smart_travel
+      POSTGRES_USER: smart_travel_user
+      POSTGRES_PASSWORD: change_me_in_production
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - gitlab_network
+
+volumes:
+  gitlab_config:
+    driver: local
+  gitlab_logs:
+    driver: local
+  gitlab_data:
+    driver: local
+  gitlab_runner_config:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  gitlab_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

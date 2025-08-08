@@ -1,0 +1,87 @@
+# 智游助手v6.2 ServiceMonitor模板
+# Week 5-6: CD Pipeline构建 - Prometheus监控集成
+
+{{- if and .Values.monitoring.prometheus.enabled .Values.monitoring.prometheus.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "smart-travel.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheus.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "smart-travel.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: http
+    path: {{ .Values.monitoring.prometheus.serviceMonitor.path }}
+    interval: {{ .Values.monitoring.prometheus.serviceMonitor.interval }}
+    scrapeTimeout: 10s
+    honorLabels: true
+    # 监控标签
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_name]
+      targetLabel: service
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_container_name]
+      targetLabel: container
+    # 自定义标签
+    - targetLabel: app
+      replacement: {{ include "smart-travel.name" . }}
+    - targetLabel: version
+      replacement: {{ .Values.app.version }}
+    - targetLabel: environment
+      replacement: {{ .Values.configMap.data.NODE_ENV }}
+  
+  # 命名空间选择器
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+
+---
+# 支付系统专项监控
+{{- if .Values.deployment.paymentProtection.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "smart-travel.fullname" . }}-payment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+    component: payment
+    monitoring: enhanced
+spec:
+  selector:
+    matchLabels:
+      {{- include "smart-travel.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: http
+    path: {{ .Values.monitoring.prometheus.serviceMonitor.path }}
+    interval: 15s  # 支付系统更频繁的监控
+    scrapeTimeout: 5s
+    honorLabels: true
+    # 支付系统特定标签
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_name]
+      targetLabel: service
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - targetLabel: component
+      replacement: payment
+    - targetLabel: protection
+      replacement: {{ .Values.deployment.paymentProtection.strategy }}
+    - targetLabel: monitoring
+      replacement: {{ .Values.deployment.paymentProtection.monitoring }}
+  
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

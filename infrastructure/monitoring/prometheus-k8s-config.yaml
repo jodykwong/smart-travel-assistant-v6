@@ -1,0 +1,355 @@
+# Prometheus Kubernetes配置
+# 扩展现有监控系统以支持K8s环境
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'smart-travel-k3s'
+        environment: 'production'
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+
+    scrape_configs:
+      # 现有的智游助手应用监控（保持兼容）
+      - job_name: 'smart-travel-app'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - smart-travel-staging
+                - smart-travel-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # 支付系统专项监控（高频采集）
+      - job_name: 'smart-travel-payment'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - smart-travel-staging
+                - smart-travel-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: smart-travel-payment
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+        scrape_interval: 5s  # 支付系统更频繁的监控
+        metrics_path: '/api/payment/metrics'
+
+      # Kubernetes API Server监控
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes节点监控
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      # Kubernetes节点Cadvisor监控
+      - job_name: 'kubernetes-nodes-cadvisor'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+      # Kubernetes服务端点监控
+      - job_name: 'kubernetes-service-endpoints'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+            action: replace
+            target_label: __scheme__
+            regex: (https?)
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            target_label: __address__
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_service_name]
+            action: replace
+            target_label: kubernetes_name
+
+      # Kubernetes Ingress监控
+      - job_name: 'kubernetes-ingresses'
+        kubernetes_sd_configs:
+          - role: ingress
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_ingress_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_ingress_annotation_prometheus_io_scheme]
+            action: replace
+            target_label: __scheme__
+            regex: (https?)
+          - source_labels: [__meta_kubernetes_ingress_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_ingress_annotation_prometheus_io_port]
+            action: replace
+            target_label: __address__
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+          - action: labelmap
+            regex: __meta_kubernetes_ingress_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_ingress_name]
+            action: replace
+            target_label: kubernetes_name
+
+      # GitLab Runner监控
+      - job_name: 'gitlab-runner'
+        static_configs:
+          - targets: ['gitlab-runner:9252']
+        scrape_interval: 30s
+
+      # Harbor监控
+      - job_name: 'harbor'
+        static_configs:
+          - targets: ['harbor-core:8080']
+        metrics_path: '/api/v2.0/metrics'
+        scrape_interval: 30s
+
+      # 现有的外部服务监控（保持兼容）
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: node-exporter
+
+      - job_name: 'grafana'
+        static_configs:
+          - targets: ['grafana:3000']
+        scrape_interval: 30s
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  smart-travel-rules.yml: |
+    groups:
+      # 智游助手应用告警规则
+      - name: smart-travel-app
+        rules:
+          - alert: SmartTravelAppDown
+            expr: up{job="smart-travel-app"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: smart-travel
+            annotations:
+              summary: "智游助手应用服务不可用"
+              description: "智游助手应用 {{ $labels.kubernetes_pod_name }} 在命名空间 {{ $labels.kubernetes_namespace }} 中已经下线超过1分钟"
+
+          - alert: SmartTravelHighResponseTime
+            expr: histogram_quantile(0.95, http_request_duration_seconds_bucket{job="smart-travel-app"}) > 2
+            for: 2m
+            labels:
+              severity: warning
+              service: smart-travel
+            annotations:
+              summary: "智游助手API响应时间过长"
+              description: "智游助手95%分位响应时间 {{ $value }}s 超过2秒"
+
+          - alert: SmartTravelHighErrorRate
+            expr: rate(http_requests_total{job="smart-travel-app",status_code=~"5.."}[5m]) / rate(http_requests_total{job="smart-travel-app"}[5m]) > 0.05
+            for: 2m
+            labels:
+              severity: warning
+              service: smart-travel
+            annotations:
+              summary: "智游助手错误率过高"
+              description: "智游助手错误率 {{ $value | humanizePercentage }} 超过5%"
+
+      # 支付系统专项告警规则
+      - name: smart-travel-payment
+        rules:
+          - alert: PaymentSuccessRateLow
+            expr: smart_travel_payment_success_rate < 0.95
+            for: 1m
+            labels:
+              severity: critical
+              service: payment
+            annotations:
+              summary: "支付成功率过低"
+              description: "支付成功率 {{ $value | humanizePercentage }} 低于95%"
+
+          - alert: PaymentResponseTimeHigh
+            expr: histogram_quantile(0.95, smart_travel_payment_response_time_seconds_bucket) > 5
+            for: 2m
+            labels:
+              severity: warning
+              service: payment
+            annotations:
+              summary: "支付响应时间过长"
+              description: "支付95%分位响应时间 {{ $value }}s 超过5秒"
+
+          - alert: PaymentErrorsHigh
+            expr: rate(smart_travel_payment_errors_total[5m]) > 0.1
+            for: 1m
+            labels:
+              severity: critical
+              service: payment
+            annotations:
+              summary: "支付错误率过高"
+              description: "支付错误率 {{ $value }} 每秒超过0.1次"
+
+      # Kubernetes集群告警规则
+      - name: kubernetes-cluster
+        rules:
+          - alert: KubernetesNodeDown
+            expr: up{job="kubernetes-nodes"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              service: kubernetes
+            annotations:
+              summary: "Kubernetes节点不可用"
+              description: "Kubernetes节点 {{ $labels.instance }} 已经下线超过5分钟"
+
+          - alert: KubernetesNodeHighCPU
+            expr: (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+            for: 5m
+            labels:
+              severity: warning
+              service: kubernetes
+            annotations:
+              summary: "Kubernetes节点CPU使用率过高"
+              description: "节点 {{ $labels.instance }} CPU使用率 {{ $value }}% 超过80%"
+
+          - alert: KubernetesNodeHighMemory
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              service: kubernetes
+            annotations:
+              summary: "Kubernetes节点内存使用率过高"
+              description: "节点 {{ $labels.instance }} 内存使用率 {{ $value | humanizePercentage }} 超过80%"
+
+          - alert: KubernetesPodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: kubernetes
+            annotations:
+              summary: "Kubernetes Pod频繁重启"
+              description: "Pod {{ $labels.pod }} 在命名空间 {{ $labels.namespace }} 中频繁重启"
+
+      # CI/CD流水线告警规则
+      - name: cicd-pipeline
+        rules:
+          - alert: GitLabRunnerDown
+            expr: up{job="gitlab-runner"} == 0
+            for: 2m
+            labels:
+              severity: warning
+              service: cicd
+            annotations:
+              summary: "GitLab Runner不可用"
+              description: "GitLab Runner已经下线超过2分钟"
+
+          - alert: HarborDown
+            expr: up{job="harbor"} == 0
+            for: 2m
+            labels:
+              severity: warning
+              service: cicd
+            annotations:
+              summary: "Harbor镜像仓库不可用"
+              description: "Harbor镜像仓库已经下线超过2分钟"

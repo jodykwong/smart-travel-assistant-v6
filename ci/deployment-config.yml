@@ -1,0 +1,341 @@
+# 智游助手v6.2 多环境部署配置
+# Week 3-4: 多环境部署支持
+# 集成现有监控系统和K8s集群
+
+# 全局配置
+global:
+  app_name: "smart-travel-assistant"
+  app_version: "6.2.0"
+  harbor_registry: "harbor.smarttravel.local"
+  harbor_project: "smart-travel"
+  
+  # 监控系统集成
+  monitoring:
+    enabled: true
+    metrics_registry: "MetricsRegistry"
+    metrics_collector: "PrometheusMetricsCollector"
+    error_handler: "ErrorHandler"
+    prometheus_endpoint: "/api/metrics"
+    health_check_endpoint: "/api/health"
+
+# 开发环境配置
+development:
+  namespace: "smart-travel-dev"
+  replicas: 1
+  
+  # 资源配置
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # 环境变量
+  environment:
+    NODE_ENV: "development"
+    LOG_LEVEL: "debug"
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "5000"
+    
+    # 数据库配置
+    DATABASE_URL: "postgresql://dev_user:dev_pass@postgres-dev:5432/smart_travel_dev"
+    REDIS_URL: "redis://redis-dev:6379"
+    
+    # 外部服务配置
+    AMAP_API_KEY: "${AMAP_API_KEY_DEV}"
+    PAYMENT_GATEWAY_URL: "https://sandbox-payment.smarttravel.com"
+  
+  # 服务配置
+  service:
+    type: "ClusterIP"
+    port: 3000
+    target_port: 3000
+  
+  # Ingress配置
+  ingress:
+    enabled: true
+    host: "dev.smarttravel.local"
+    tls_enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/"
+  
+  # 存储配置
+  storage:
+    enabled: false
+  
+  # 监控配置
+  monitoring:
+    prometheus_scrape: true
+    grafana_dashboard: "smart-travel-dev"
+    alert_rules: "development"
+
+# 测试环境配置
+staging:
+  namespace: "smart-travel-staging"
+  replicas: 2
+  
+  # 资源配置
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  
+  # 环境变量
+  environment:
+    NODE_ENV: "staging"
+    LOG_LEVEL: "info"
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "10000"
+    
+    # 数据库配置
+    DATABASE_URL: "postgresql://staging_user:staging_pass@postgres-staging:5432/smart_travel_staging"
+    REDIS_URL: "redis://redis-staging:6379"
+    
+    # 外部服务配置
+    AMAP_API_KEY: "${AMAP_API_KEY_STAGING}"
+    PAYMENT_GATEWAY_URL: "https://staging-payment.smarttravel.com"
+  
+  # 服务配置
+  service:
+    type: "ClusterIP"
+    port: 3000
+    target_port: 3000
+  
+  # Ingress配置
+  ingress:
+    enabled: true
+    host: "staging.smarttravel.local"
+    tls_enabled: true
+    tls_secret: "staging-tls"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/"
+      cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  
+  # 存储配置
+  storage:
+    enabled: true
+    size: "10Gi"
+    storage_class: "local-path"
+  
+  # 监控配置
+  monitoring:
+    prometheus_scrape: true
+    grafana_dashboard: "smart-travel-staging"
+    alert_rules: "staging"
+  
+  # 健康检查配置
+  health_checks:
+    liveness_probe:
+      http_get:
+        path: "/api/health"
+        port: 3000
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+    
+    readiness_probe:
+      http_get:
+        path: "/api/ready"
+        port: 3000
+      initial_delay_seconds: 5
+      period_seconds: 5
+      timeout_seconds: 3
+      failure_threshold: 3
+
+# 生产环境配置
+production:
+  namespace: "smart-travel-production"
+  replicas: 3
+  
+  # 资源配置
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+  
+  # 环境变量
+  environment:
+    NODE_ENV: "production"
+    LOG_LEVEL: "warn"
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "15000"
+    
+    # 数据库配置
+    DATABASE_URL: "postgresql://prod_user:${PROD_DB_PASSWORD}@postgres-prod:5432/smart_travel_prod"
+    REDIS_URL: "redis://redis-prod:6379"
+    
+    # 外部服务配置
+    AMAP_API_KEY: "${AMAP_API_KEY_PROD}"
+    PAYMENT_GATEWAY_URL: "https://payment.smarttravel.com"
+  
+  # 服务配置
+  service:
+    type: "ClusterIP"
+    port: 3000
+    target_port: 3000
+  
+  # Ingress配置
+  ingress:
+    enabled: true
+    host: "api.smarttravel.com"
+    tls_enabled: true
+    tls_secret: "production-tls"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  
+  # 存储配置
+  storage:
+    enabled: true
+    size: "50Gi"
+    storage_class: "local-path"
+  
+  # 监控配置
+  monitoring:
+    prometheus_scrape: true
+    grafana_dashboard: "smart-travel-production"
+    alert_rules: "production"
+  
+  # 健康检查配置
+  health_checks:
+    liveness_probe:
+      http_get:
+        path: "/api/health"
+        port: 3000
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      failure_threshold: 3
+    
+    readiness_probe:
+      http_get:
+        path: "/api/ready"
+        port: 3000
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+  
+  # 自动扩缩容配置
+  autoscaling:
+    enabled: true
+    min_replicas: 3
+    max_replicas: 10
+    target_cpu_utilization: 70
+    target_memory_utilization: 80
+  
+  # 网络策略
+  network_policy:
+    enabled: true
+    ingress_rules:
+      - from_namespaces: ["monitoring", "ingress-nginx"]
+      - from_pods: ["prometheus", "grafana"]
+    egress_rules:
+      - to_services: ["postgres-prod", "redis-prod"]
+      - to_external: ["amap-api", "payment-gateway"]
+
+# 支付系统特殊部署配置
+payment_system:
+  # 蓝绿部署配置
+  blue_green_deployment:
+    enabled: true
+    strategy: "blue_green"
+    
+    # 蓝色环境
+    blue:
+      replicas: 2
+      weight: 0  # 初始流量权重
+    
+    # 绿色环境
+    green:
+      replicas: 2
+      weight: 100  # 初始流量权重
+    
+    # 切换策略
+    switch_strategy:
+      validation_checks:
+        - "health_check"
+        - "payment_test"
+        - "monitoring_metrics"
+      
+      rollback_triggers:
+        - "error_rate > 1%"
+        - "response_time > 5s"
+        - "payment_success_rate < 99%"
+      
+      switch_duration: "300s"  # 5分钟切换时间
+  
+  # 实时监控配置
+  real_time_monitoring:
+    enabled: true
+    
+    # 关键指标监控
+    key_metrics:
+      - name: "payment_success_rate"
+        threshold: 0.99
+        alert_threshold: 0.95
+      
+      - name: "payment_response_time"
+        threshold: 5.0
+        alert_threshold: 10.0
+      
+      - name: "payment_error_rate"
+        threshold: 0.01
+        alert_threshold: 0.05
+    
+    # 告警配置
+    alerts:
+      critical:
+        - "payment_success_rate < 95%"
+        - "payment_response_time > 10s"
+        - "payment_error_rate > 5%"
+      
+      warning:
+        - "payment_success_rate < 99%"
+        - "payment_response_time > 5s"
+        - "payment_error_rate > 1%"
+    
+    # 自动回滚配置
+    auto_rollback:
+      enabled: true
+      conditions:
+        - "payment_success_rate < 90%"
+        - "payment_error_rate > 10%"
+      rollback_timeout: "60s"
+
+# 部署策略配置
+deployment_strategies:
+  # 滚动更新
+  rolling_update:
+    max_unavailable: "25%"
+    max_surge: "25%"
+  
+  # 蓝绿部署
+  blue_green:
+    preview_replicas: 1
+    scale_down_delay: "30s"
+    auto_promotion_enabled: false
+  
+  # 金丝雀部署
+  canary:
+    steps:
+      - set_weight: 10
+      - pause: "300s"
+      - set_weight: 50
+      - pause: "600s"
+      - set_weight: 100
+    
+    analysis:
+      success_rate: 99
+      error_rate: 1
+      response_time: 5000

@@ -1,0 +1,862 @@
+# 智游助手v6.2 GitLab CI/CD Pipeline
+# Week 3-4: 完整CI Pipeline构建
+# 基于阶段一基础设施：GitLab CE + Harbor + K3s + 监控系统
+
+variables:
+  # Docker镜像配置
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+  # Harbor镜像仓库配置
+  HARBOR_REGISTRY: "harbor.smarttravel.local"
+  HARBOR_PROJECT: "smart-travel"
+  IMAGE_NAME: "${HARBOR_REGISTRY}/${HARBOR_PROJECT}/smart-travel-assistant"
+
+  # 应用配置
+  APP_NAME: "smart-travel-assistant"
+  APP_VERSION: "6.2.0"
+  NODE_VERSION: "18"
+  PNPM_VERSION: "8.10.0"
+
+  # 测试配置
+  COVERAGE_THRESHOLD: "80"
+
+  # 安全扫描配置
+  TRIVY_VERSION: "0.47.0"
+
+  # K8s配置
+  KUBECONFIG: "/tmp/kubeconfig"
+  KUBE_NAMESPACE_DEV: "smart-travel-dev"
+  KUBE_NAMESPACE_STAGING: "smart-travel-staging"
+  KUBE_NAMESPACE_PROD: "smart-travel-production"
+
+stages:
+  - validate      # 代码验证和依赖检查
+  - test         # 自动化测试
+  - security     # 安全扫描
+  - build        # 构建和打包
+  - deploy       # 部署到各环境
+
+# 缓存配置
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - node_modules/
+    - .pnpm-store/
+    - .next/cache/
+
+# 通用脚本
+.common_scripts: &common_scripts
+  - echo "🚀 智游助手v6.2 CI/CD Pipeline - Stage:$CI_JOB_STAGE Job:$CI_JOB_NAME"
+  - echo "📊 集成现有监控系统 - MetricsRegistry + MetricsCollector + ErrorHandler"
+  - export CI_PIPELINE_START_TIME=$(date +%s)
+
+# Node.js环境准备
+.node_setup: &node_setup
+  image: node:${NODE_VERSION}-alpine
+  before_script:
+    - *common_scripts
+    - apk add --no-cache git curl jq
+    - npm install -g pnpm@${PNPM_VERSION}
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+# Docker环境准备
+.docker_setup: &docker_setup
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - *common_scripts
+    - docker info
+    - echo $HARBOR_PASSWORD | docker login $HARBOR_REGISTRY -u $HARBOR_USERNAME --password-stdin
+
+# ==================== VALIDATE阶段 ====================
+
+# 依赖安全检查
+dependency_check:
+  stage: validate
+  <<: *node_setup
+  script:
+    - echo "🔍 检查依赖安全性..."
+    - pnpm audit --audit-level moderate
+    - echo "✅ 依赖安全检查通过"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 代码格式检查
+lint_check:
+  stage: validate
+  <<: *node_setup
+  script:
+    - echo "🔍 代码格式和质量检查..."
+    - pnpm run lint
+    - pnpm run type-check
+    - echo "✅ 代码格式检查通过"
+  artifacts:
+    reports:
+      junit: reports/lint-results.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 架构质量检查
+architecture_check:
+  stage: validate
+  <<: *node_setup
+  script:
+    - echo "🏗️ 架构质量检查..."
+    - echo "检查模块依赖关系..."
+    - npx madge --circular --extensions ts,tsx src/
+    - echo "检查代码复杂度..."
+    - npx complexity-report --format json --output reports/complexity.json src/
+    - echo "检查技术债务..."
+    - npx ts-prune --error
+    - echo "✅ 架构质量检查通过"
+  artifacts:
+    paths:
+      - reports/complexity.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==================== TEST阶段 ====================
+
+# 单元测试
+unit_tests:
+  stage: test
+  <<: *node_setup
+  script:
+    - echo "🧪 运行单元测试..."
+    - pnpm run test:unit --coverage --reporter=junit --outputFile=reports/unit-tests.xml
+    - echo "📊 测试覆盖率检查..."
+    - npx nyc check-coverage --lines $COVERAGE_THRESHOLD --functions $COVERAGE_THRESHOLD --branches $COVERAGE_THRESHOLD
+    - echo "✅ 单元测试通过，覆盖率达标"
+  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+  artifacts:
+    reports:
+      junit: reports/unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+      - reports/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 集成测试
+integration_tests:
+  stage: test
+  <<: *node_setup
+  services:
+    - postgres:15-alpine
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: smart_travel_test
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_password
+    REDIS_URL: redis://redis:6379
+  script:
+    - echo "🔗 运行集成测试..."
+    - echo "启动测试数据库和缓存..."
+    - pnpm run test:integration --reporter=junit --outputFile=reports/integration-tests.xml
+    - echo "✅ 集成测试通过"
+  artifacts:
+    reports:
+      junit: reports/integration-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# E2E测试
+e2e_tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.40.0-focal
+  variables:
+    NODE_ENV: test
+  before_script:
+    - *common_scripts
+    - npm install -g pnpm@${PNPM_VERSION}
+    - pnpm install --frozen-lockfile
+    - pnpm exec playwright install
+  script:
+    - echo "🎭 运行E2E测试..."
+    - pnpm run build:test
+    - pnpm run start:test &
+    - sleep 30
+    - pnpm run test:e2e --reporter=junit --outputFile=reports/e2e-tests.xml
+    - echo "✅ E2E测试通过"
+  artifacts:
+    reports:
+      junit: reports/e2e-tests.xml
+    paths:
+      - test-results/
+      - reports/
+    expire_in: 1 week
+    when: always
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# 监控系统测试
+monitoring_tests:
+  stage: test
+  <<: *node_setup
+  script:
+    - echo "📊 测试监控系统集成..."
+    - echo "测试MetricsRegistry..."
+    - pnpm run test src/lib/monitoring/MetricsRegistry.ts
+    - echo "测试MetricsCollector..."
+    - pnpm run test src/lib/monitoring/MetricsCollector.ts
+    - echo "测试ErrorHandler..."
+    - pnpm run test src/lib/monitoring/ErrorHandler.ts
+    - echo "测试监控端点..."
+    - pnpm run test:monitoring
+    - echo "✅ 监控系统测试通过"
+  artifacts:
+    paths:
+      - reports/monitoring-tests.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==================== SECURITY阶段 ====================
+
+# 依赖漏洞扫描
+dependency_security_scan:
+  stage: security
+  <<: *node_setup
+  script:
+    - echo "🔒 依赖漏洞扫描..."
+    - pnpm audit --audit-level high --json > reports/npm-audit.json || true
+    - echo "检查高危漏洞..."
+    - if [ $(jq '.metadata.vulnerabilities.high // 0' reports/npm-audit.json) -gt 0 ]; then
+        echo "❌ 发现高危漏洞，阻止部署";
+        exit 1;
+      fi
+    - echo "✅ 依赖安全扫描通过"
+  artifacts:
+    paths:
+      - reports/npm-audit.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 代码安全扫描
+code_security_scan:
+  stage: security
+  <<: *node_setup
+  script:
+    - echo "🔍 代码安全扫描..."
+    - npm install -g @eslint/eslintrc eslint-plugin-security
+    - npx eslint --ext .ts,.tsx --config .eslintrc.security.js src/ --format json --output-file reports/security-scan.json || true
+    - echo "检查安全问题..."
+    - if [ $(jq 'length' reports/security-scan.json) -gt 0 ]; then
+        echo "⚠️ 发现安全问题，请检查报告";
+      fi
+    - echo "✅ 代码安全扫描完成"
+  artifacts:
+    paths:
+      - reports/security-scan.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 镜像安全扫描
+image_security_scan:
+  stage: security
+  image: aquasec/trivy:${TRIVY_VERSION}
+  before_script:
+    - *common_scripts
+  script:
+    - echo "🐳 Docker镜像安全扫描..."
+    - trivy image --format json --output reports/trivy-image.json ${IMAGE_NAME}:${CI_COMMIT_SHA} || true
+    - trivy image --format table ${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - echo "检查严重漏洞..."
+    - CRITICAL_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' reports/trivy-image.json)
+    - if [ "$CRITICAL_COUNT" -gt 0 ]; then
+        echo "❌ 发现 $CRITICAL_COUNT 个严重漏洞，阻止部署";
+        exit 1;
+      fi
+    - echo "✅ 镜像安全扫描通过"
+  artifacts:
+    paths:
+      - reports/trivy-image.json
+    expire_in: 1 week
+  dependencies:
+    - build_image
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==================== BUILD阶段 ====================
+
+# 构建应用
+build_app:
+  stage: build
+  <<: *node_setup
+  script:
+    - echo "🏗️ 构建应用..."
+    - echo "集成监控系统组件..."
+    - pnpm run build
+    - echo "生成构建报告..."
+    - ls -la .next/
+    - echo "✅ 应用构建完成"
+  artifacts:
+    paths:
+      - .next/
+      - public/
+      - package.json
+      - package-lock.json
+    expire_in: 1 hour
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 构建Docker镜像
+build_image:
+  stage: build
+  <<: *docker_setup
+  script:
+    - echo "🐳 构建Docker镜像..."
+    - echo "FROM node:${NODE_VERSION}-alpine" > Dockerfile.ci
+    - echo "WORKDIR /app" >> Dockerfile.ci
+    - echo "COPY package*.json ./" >> Dockerfile.ci
+    - echo "RUN npm ci --only=production" >> Dockerfile.ci
+    - echo "COPY .next ./.next" >> Dockerfile.ci
+    - echo "COPY public ./public" >> Dockerfile.ci
+    - echo "EXPOSE 3000" >> Dockerfile.ci
+    - echo "CMD [\"npm\", \"start\"]" >> Dockerfile.ci
+    - docker build -f Dockerfile.ci -t ${IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker tag ${IMAGE_NAME}:${CI_COMMIT_SHA} ${IMAGE_NAME}:latest
+    - echo "推送镜像到Harbor..."
+    - docker push ${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - docker push ${IMAGE_NAME}:latest
+    - echo "✅ Docker镜像构建完成"
+  dependencies:
+    - build_app
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==================== DEPLOY阶段 ====================
+
+# 部署到开发环境
+deploy_dev:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - kubectl version --client
+  script:
+    - echo "🚀 部署到开发环境..."
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_DEV
+    - envsubst < ci/k8s-deployment-template.yml > deployment.yml
+    - kubectl apply -f deployment.yml
+    - kubectl rollout status deployment/${APP_NAME} -n $KUBE_NAMESPACE_DEV
+    - echo "验证部署..."
+    - kubectl get pods -n $KUBE_NAMESPACE_DEV
+    - echo "✅ 开发环境部署完成"
+  environment:
+    name: development
+    url: https://dev.smarttravel.local
+  dependencies:
+    - build_image
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# 部署到测试环境
+deploy_staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - kubectl version --client
+  script:
+    - echo "🚀 部署到测试环境..."
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_STAGING
+    - envsubst < ci/k8s-deployment-template.yml > deployment.yml
+    - kubectl apply -f deployment.yml
+    - kubectl rollout status deployment/${APP_NAME} -n $KUBE_NAMESPACE_STAGING
+    - echo "运行部署后测试..."
+    - ./ci/post-deployment-tests.sh staging
+    - echo "✅ 测试环境部署完成"
+  environment:
+    name: staging
+    url: https://staging.smarttravel.local
+  dependencies:
+    - build_image
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 部署到生产环境（支付系统特殊保护）
+deploy_production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - kubectl version --client
+  script:
+    - echo "🚀 部署到生产环境（蓝绿部署）..."
+    - echo "执行支付系统特殊保护策略..."
+    - ./ci/payment-system-protection.sh pre-deploy
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_PROD
+    - echo "开始蓝绿部署..."
+    - ./ci/blue-green-deployment.sh ${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - echo "验证部署和监控..."
+    - ./ci/post-deployment-tests.sh production
+    - ./ci/payment-system-protection.sh post-deploy
+    - echo "✅ 生产环境部署完成"
+  environment:
+    name: production
+    url: https://api.smarttravel.com
+  dependencies:
+    - build_image
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  timeout: 30m
+
+# ==================== CD PIPELINE扩展 (Week 5-6) ====================
+
+# Helm Chart验证
+helm_lint:
+  stage: validate
+  image: alpine/helm:latest
+  before_script:
+    - *common_scripts
+    - helm version
+  script:
+    - echo "🔍 Helm Chart语法检查..."
+    - helm lint helm/smart-travel/
+    - echo "🔍 Helm模板渲染测试..."
+    - helm template smart-travel helm/smart-travel/ --values helm/smart-travel/values-development.yaml > /dev/null
+    - helm template smart-travel helm/smart-travel/ --values helm/smart-travel/values-production.yaml > /dev/null
+    - echo "✅ Helm Chart验证通过"
+  artifacts:
+    paths:
+      - reports/helm-lint.txt
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Kubernetes配置验证
+k8s_config_validation:
+  stage: validate
+  image: bitnami/kubectl:latest
+  before_script:
+    - *common_scripts
+  script:
+    - echo "🔍 Kubernetes配置验证..."
+    - helm template smart-travel helm/smart-travel/ --values helm/smart-travel/values-production.yaml > k8s-manifests.yaml
+    - kubectl --dry-run=client apply -f k8s-manifests.yaml
+    - echo "✅ Kubernetes配置验证通过"
+  artifacts:
+    paths:
+      - k8s-manifests.yaml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Helm Chart打包
+helm_package:
+  stage: build
+  image: alpine/helm:latest
+  before_script:
+    - *common_scripts
+    - helm version
+  script:
+    - echo "📦 打包Helm Chart..."
+    - helm package helm/smart-travel/ --version ${APP_VERSION} --app-version ${APP_VERSION}
+    - echo "推送Helm Chart到Harbor..."
+    - helm registry login $HARBOR_REGISTRY -u $HARBOR_USERNAME -p $HARBOR_PASSWORD
+    - helm push smart-travel-assistant-${APP_VERSION}.tgz oci://$HARBOR_REGISTRY/$HARBOR_PROJECT
+    - echo "✅ Helm Chart打包完成"
+  artifacts:
+    paths:
+      - smart-travel-assistant-*.tgz
+    expire_in: 1 week
+  dependencies:
+    - build_image
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 使用Helm部署到开发环境
+helm_deploy_dev:
+  stage: deploy
+  image: alpine/helm:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - helm version
+    - kubectl version --client
+  script:
+    - echo "🚀 使用Helm部署到开发环境..."
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_DEV
+    - helm registry login $HARBOR_REGISTRY -u $HARBOR_USERNAME -p $HARBOR_PASSWORD
+    - |
+      helm upgrade --install smart-travel-dev oci://$HARBOR_REGISTRY/$HARBOR_PROJECT/smart-travel-assistant \
+        --version ${APP_VERSION} \
+        --namespace $KUBE_NAMESPACE_DEV \
+        --create-namespace \
+        --values helm/smart-travel/values-development.yaml \
+        --set app.image.tag=${CI_COMMIT_SHA} \
+        --set global.imageRegistry=$HARBOR_REGISTRY \
+        --set global.imageProject=$HARBOR_PROJECT \
+        --wait --timeout=600s
+    - echo "验证部署..."
+    - kubectl get pods -n $KUBE_NAMESPACE_DEV
+    - kubectl rollout status deployment/smart-travel-dev -n $KUBE_NAMESPACE_DEV
+    - echo "✅ 开发环境Helm部署完成"
+  environment:
+    name: development
+    url: https://dev.smarttravel.local
+  dependencies:
+    - helm_package
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# 使用Helm部署到测试环境
+helm_deploy_staging:
+  stage: deploy
+  image: alpine/helm:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - helm version
+    - kubectl version --client
+  script:
+    - echo "🚀 使用Helm部署到测试环境..."
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_STAGING
+    - helm registry login $HARBOR_REGISTRY -u $HARBOR_USERNAME -p $HARBOR_PASSWORD
+    - |
+      helm upgrade --install smart-travel-staging oci://$HARBOR_REGISTRY/$HARBOR_PROJECT/smart-travel-assistant \
+        --version ${APP_VERSION} \
+        --namespace $KUBE_NAMESPACE_STAGING \
+        --create-namespace \
+        --values helm/smart-travel/values.yaml \
+        --set app.image.tag=${CI_COMMIT_SHA} \
+        --set global.imageRegistry=$HARBOR_REGISTRY \
+        --set global.imageProject=$HARBOR_PROJECT \
+        --set app.env.NODE_ENV=staging \
+        --set configMap.data.NODE_ENV=staging \
+        --wait --timeout=600s
+    - echo "运行部署后测试..."
+    - ./ci/post-deployment-tests.sh staging
+    - echo "✅ 测试环境Helm部署完成"
+  environment:
+    name: staging
+    url: https://staging.smarttravel.local
+  dependencies:
+    - helm_package
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# 使用Helm部署到生产环境（蓝绿部署）
+helm_deploy_production:
+  stage: deploy
+  image: alpine/helm:latest
+  before_script:
+    - *common_scripts
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    - helm version
+    - kubectl version --client
+  script:
+    - echo "🚀 使用Helm蓝绿部署到生产环境..."
+    - echo "执行支付系统特殊保护策略..."
+    - ./ci/payment-system-protection.sh pre-deploy
+    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE_PROD
+    - helm registry login $HARBOR_REGISTRY -u $HARBOR_USERNAME -p $HARBOR_PASSWORD
+    - echo "开始蓝绿部署..."
+    - ./ci/helm-blue-green-deployment.sh ${APP_VERSION} ${CI_COMMIT_SHA}
+    - echo "验证部署和监控..."
+    - ./ci/post-deployment-tests.sh production
+    - ./ci/payment-system-protection.sh post-deploy
+    - echo "✅ 生产环境Helm蓝绿部署完成"
+  environment:
+    name: production
+    url: https://api.smarttravel.com
+  dependencies:
+    - helm_package
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  timeout: 45m
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_USERNAME: root
+    DB_PASSWORD: test_password
+    DB_DATABASE: smart_travel_test
+    NODE_ENV: test
+  before_script:
+    - echo "📦 安装依赖..."
+    - npm ci --cache .npm --prefer-offline
+    - echo "🗄️ 等待数据库启动..."
+    - sleep 10
+  script:
+    - echo "🧪 运行现有测试套件..."
+    # 集成现有的Phase 3A测试
+    - npm run test:phase3a
+    - echo "✅ Phase 3A测试通过"
+    
+    # 运行单元测试
+    - npm run test:unit
+    - echo "✅ 单元测试通过"
+    
+    # 运行集成测试
+    - npm run test:integration
+    - echo "✅ 集成测试通过"
+    
+    # 生成测试覆盖率报告
+    - npm run test:coverage
+    - echo "✅ 测试覆盖率报告生成完成"
+  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - phase3a-*
+
+# 安全扫描阶段 - 集成现有安全测试框架
+security-scan:
+  stage: security-scan
+  image: node:18-alpine
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - echo "🔒 运行安全扫描..."
+    
+    # 集成现有的安全测试
+    - npm run test:security
+    - echo "✅ 现有安全测试通过"
+    
+    # npm audit 依赖漏洞检查
+    - npm audit --audit-level=high
+    - echo "✅ 依赖漏洞检查通过"
+    
+    # 代码安全扫描（如果配置了SonarQube）
+    - |
+      if [ -n "$SONAR_TOKEN" ]; then
+        echo "🔍 运行SonarQube代码扫描..."
+        npx sonar-scanner
+        echo "✅ 代码安全扫描完成"
+      else
+        echo "⚠️ SonarQube未配置，跳过代码扫描"
+      fi
+    
+    # 检查敏感信息泄露
+    - echo "🔍 检查敏感信息..."
+    - ./scripts/final-security-check.sh
+    - echo "✅ 敏感信息检查通过"
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    paths:
+      - security-scan-results/
+    expire_in: 1 week
+  allow_failure: false
+  only:
+    - main
+    - develop
+    - phase3a-*
+
+# 构建阶段 - 基于现有Dockerfile
+build:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "🐳 准备Docker环境..."
+    - docker info
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo "🏗️ 构建Docker镜像..."
+    - echo "基于现有Dockerfile构建镜像"
+    
+    # 构建应用镜像
+    - docker build -t $IMAGE_TAG .
+    - echo "✅ 镜像构建完成: $IMAGE_TAG"
+    
+    # 推送镜像到仓库
+    - docker push $IMAGE_TAG
+    - echo "✅ 镜像推送完成"
+    
+    # 创建latest标签（仅主分支）
+    - |
+      if [ "$CI_COMMIT_REF_NAME" = "main" ]; then
+        docker tag $IMAGE_TAG $CI_REGISTRY_IMAGE:latest
+        docker push $CI_REGISTRY_IMAGE:latest
+        echo "✅ latest标签创建完成"
+      fi
+    
+    # 镜像安全扫描（如果配置了Trivy）
+    - |
+      if command -v trivy >/dev/null 2>&1; then
+        echo "🔍 运行容器安全扫描..."
+        trivy image --exit-code 0 --severity HIGH,CRITICAL $IMAGE_TAG
+        echo "✅ 容器安全扫描完成"
+      else
+        echo "⚠️ Trivy未安装，跳过容器安全扫描"
+      fi
+  artifacts:
+    paths:
+      - docker-scan-results/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - phase3a-*
+
+# 部署到测试环境
+deploy-staging:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DEPLOY_ENV: staging
+  before_script:
+    - echo "🚀 准备部署环境..."
+    - apk add --no-cache curl
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo "📦 部署到测试环境..."
+    
+    # 拉取最新镜像
+    - docker pull $IMAGE_TAG
+    
+    # 使用现有docker-compose配置部署
+    - echo "使用现有docker-compose配置进行部署"
+    - export IMAGE_TAG=$IMAGE_TAG
+    - docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+    
+    # 等待服务启动
+    - echo "⏳ 等待服务启动..."
+    - sleep 30
+    
+    # 健康检查
+    - echo "🏥 执行健康检查..."
+    - curl -f http://localhost:3000/health
+    - echo "✅ 健康检查通过"
+    
+    # 验证关键功能
+    - echo "🔍 验证关键功能..."
+    - curl -f http://localhost:3000/api/v1/health
+    - echo "✅ API健康检查通过"
+    
+    # 验证监控指标端点
+    - curl -f http://localhost:3000/metrics || echo "⚠️ 监控指标端点将在监控系统部署后可用"
+    
+  environment:
+    name: staging
+    url: http://staging.smarttravel.local
+  when: manual
+  only:
+    - develop
+    - phase3a-*
+
+# 部署到生产环境
+deploy-production:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DEPLOY_ENV: production
+  before_script:
+    - echo "🚀 准备生产部署..."
+    - apk add --no-cache curl
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo "🏭 部署到生产环境..."
+    
+    # 生产环境部署前检查
+    - echo "🔍 生产环境部署前检查..."
+    - docker pull $IMAGE_TAG
+    
+    # 蓝绿部署（如果配置了）
+    - echo "🔄 执行蓝绿部署..."
+    - export IMAGE_TAG=$IMAGE_TAG
+    - docker-compose -f docker-compose.yml -f docker-compose.production.yml up -d
+    
+    # 生产环境健康检查
+    - echo "🏥 生产环境健康检查..."
+    - sleep 60  # 生产环境需要更长启动时间
+    - curl -f http://localhost:3000/health
+    - echo "✅ 生产环境健康检查通过"
+    
+    # 关键业务功能验证
+    - echo "💼 关键业务功能验证..."
+    - curl -f http://localhost:3000/api/v1/health
+    - echo "✅ 生产环境部署完成"
+    
+  environment:
+    name: production
+    url: https://smarttravel.com
+  when: manual
+  only:
+    - main
+
+# 部署后验证
+post-deploy-verification:
+  stage: deploy
+  image: node:18-alpine
+  script:
+    - echo "✅ 部署后验证..."
+    - apk add --no-cache curl
+    
+    # 验证应用响应
+    - curl -f http://localhost:3000/health
+    
+    # 验证关键API端点
+    - curl -f http://localhost:3000/api/v1/health
+    
+    # 验证数据库连接
+    - curl -f http://localhost:3000/api/v1/status/database
+    
+    # 验证Redis连接
+    - curl -f http://localhost:3000/api/v1/status/redis
+    
+    # 验证支付系统状态（基于隔离式支付验证架构）
+    - curl -f http://localhost:3000/api/v1/status/payment
+    
+    echo "🎉 所有验证通过，部署成功！"
+  when: on_success
+  only:
+    - main
+    - develop

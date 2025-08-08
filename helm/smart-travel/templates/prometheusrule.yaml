@@ -1,0 +1,197 @@
+# 智游助手v6.2 PrometheusRule模板
+# Week 5-6: CD Pipeline构建 - 告警规则配置
+
+{{- if .Values.monitoring.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "smart-travel.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  # 应用基础告警规则
+  - name: smart-travel-app.rules
+    interval: 30s
+    rules:
+    {{- range .Values.monitoring.alerts.rules }}
+    - alert: {{ .alert }}
+      expr: {{ .expr }}
+      for: {{ .for }}
+      labels:
+        {{- toYaml .labels | nindent 8 }}
+        app: {{ include "smart-travel.name" $ }}
+        namespace: {{ $.Release.Namespace }}
+      annotations:
+        {{- toYaml .annotations | nindent 8 }}
+        runbook_url: "https://docs.smarttravel.com/runbooks/{{ .alert | lower }}"
+    {{- end }}
+    
+    # 应用可用性告警
+    - alert: SmartTravelAppDown
+      expr: up{job="{{ include "smart-travel.fullname" . }}"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: application
+      annotations:
+        summary: "智游助手应用不可用"
+        description: "智游助手应用 {{ "{{ $labels.instance }}" }} 已经下线超过1分钟"
+        runbook_url: "https://docs.smarttravel.com/runbooks/app-down"
+    
+    # 高错误率告警
+    - alert: SmartTravelHighErrorRate
+      expr: rate(smart_travel_http_requests_total{status=~"5.."}[5m]) / rate(smart_travel_http_requests_total[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "智游助手应用错误率过高"
+        description: "智游助手应用错误率 {{ "{{ $value | humanizePercentage }}" }} 超过5%"
+        runbook_url: "https://docs.smarttravel.com/runbooks/high-error-rate"
+    
+    # 高响应时间告警
+    - alert: SmartTravelHighResponseTime
+      expr: histogram_quantile(0.95, rate(smart_travel_http_request_duration_seconds_bucket[5m])) > 5
+      for: 3m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "智游助手应用响应时间过长"
+        description: "智游助手应用95%分位响应时间 {{ "{{ $value }}s" }} 超过5秒"
+        runbook_url: "https://docs.smarttravel.com/runbooks/high-response-time"
+    
+    # 内存使用率告警
+    - alert: SmartTravelHighMemoryUsage
+      expr: (container_memory_working_set_bytes{pod=~"{{ include "smart-travel.fullname" . }}-.*"} / container_spec_memory_limit_bytes) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        component: resources
+      annotations:
+        summary: "智游助手应用内存使用率过高"
+        description: "智游助手应用内存使用率 {{ "{{ $value | humanizePercentage }}" }} 超过80%"
+        runbook_url: "https://docs.smarttravel.com/runbooks/high-memory-usage"
+    
+    # CPU使用率告警
+    - alert: SmartTravelHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{pod=~"{{ include "smart-travel.fullname" . }}-.*"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        component: resources
+      annotations:
+        summary: "智游助手应用CPU使用率过高"
+        description: "智游助手应用CPU使用率 {{ "{{ $value | humanizePercentage }}" }} 超过80%"
+        runbook_url: "https://docs.smarttravel.com/runbooks/high-cpu-usage"
+
+  # 支付系统专项告警规则
+  {{- if .Values.deployment.paymentProtection.enabled }}
+  - name: smart-travel-payment.rules
+    interval: 15s  # 支付系统更频繁的检查
+    rules:
+    # 支付成功率告警
+    - alert: PaymentSuccessRateLow
+      expr: rate(smart_travel_payment_requests_total{status="success"}[5m]) / rate(smart_travel_payment_requests_total[5m]) < 0.99
+      for: 1m
+      labels:
+        severity: critical
+        component: payment
+        protection: enabled
+      annotations:
+        summary: "支付成功率过低"
+        description: "支付成功率 {{ "{{ $value | humanizePercentage }}" }} 低于99%"
+        runbook_url: "https://docs.smarttravel.com/runbooks/payment-success-rate-low"
+    
+    # 支付响应时间告警
+    - alert: PaymentResponseTimeHigh
+      expr: histogram_quantile(0.95, rate(smart_travel_payment_duration_seconds_bucket[5m])) > 5
+      for: 2m
+      labels:
+        severity: warning
+        component: payment
+        protection: enabled
+      annotations:
+        summary: "支付响应时间过长"
+        description: "支付95%分位响应时间 {{ "{{ $value }}s" }} 超过5秒"
+        runbook_url: "https://docs.smarttravel.com/runbooks/payment-response-time-high"
+    
+    # 支付错误率告警
+    - alert: PaymentErrorRateHigh
+      expr: rate(smart_travel_payment_requests_total{status="error"}[5m]) / rate(smart_travel_payment_requests_total[5m]) > 0.01
+      for: 1m
+      labels:
+        severity: critical
+        component: payment
+        protection: enabled
+      annotations:
+        summary: "支付错误率过高"
+        description: "支付错误率 {{ "{{ $value | humanizePercentage }}" }} 超过1%"
+        runbook_url: "https://docs.smarttravel.com/runbooks/payment-error-rate-high"
+    
+    # 支付系统蓝绿部署状态告警
+    - alert: PaymentBlueGreenDeploymentIssue
+      expr: |
+        (
+          count(up{job="{{ include "smart-travel.fullname" . }}-blue"} == 1) == 0 and
+          count(up{job="{{ include "smart-travel.fullname" . }}-green"} == 1) == 0
+        )
+      for: 30s
+      labels:
+        severity: critical
+        component: payment
+        deployment: blue-green
+      annotations:
+        summary: "支付系统蓝绿部署异常"
+        description: "支付系统蓝绿环境都不可用"
+        runbook_url: "https://docs.smarttravel.com/runbooks/payment-blue-green-issue"
+  {{- end }}
+
+  # 监控系统集成告警规则
+  - name: smart-travel-monitoring.rules
+    interval: 30s
+    rules:
+    # MetricsRegistry状态告警
+    - alert: MetricsRegistryDown
+      expr: smart_travel_metrics_registry_status != 1
+      for: 2m
+      labels:
+        severity: warning
+        component: monitoring
+        system: metrics-registry
+      annotations:
+        summary: "MetricsRegistry服务异常"
+        description: "MetricsRegistry服务状态异常"
+        runbook_url: "https://docs.smarttravel.com/runbooks/metrics-registry-down"
+    
+    # MetricsCollector状态告警
+    - alert: MetricsCollectorDown
+      expr: smart_travel_metrics_collector_status != 1
+      for: 2m
+      labels:
+        severity: warning
+        component: monitoring
+        system: metrics-collector
+      annotations:
+        summary: "MetricsCollector服务异常"
+        description: "MetricsCollector服务状态异常"
+        runbook_url: "https://docs.smarttravel.com/runbooks/metrics-collector-down"
+    
+    # ErrorHandler状态告警
+    - alert: ErrorHandlerDown
+      expr: smart_travel_error_handler_status != 1
+      for: 2m
+      labels:
+        severity: warning
+        component: monitoring
+        system: error-handler
+      annotations:
+        summary: "ErrorHandler服务异常"
+        description: "ErrorHandler服务状态异常"
+        runbook_url: "https://docs.smarttravel.com/runbooks/error-handler-down"
+{{- end }}

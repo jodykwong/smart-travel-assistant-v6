@@ -1,0 +1,121 @@
+# 智游助手v6.2 ConfigMap模板
+# Week 5-6: CD Pipeline构建 - 配置管理
+
+{{- if .Values.configMap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "smart-travel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+data:
+  # 应用基础配置
+  NODE_ENV: {{ .Values.configMap.data.NODE_ENV | quote }}
+  LOG_LEVEL: {{ .Values.configMap.data.LOG_LEVEL | quote }}
+  
+  # 监控系统配置（集成现有监控系统）
+  METRICS_ENABLED: {{ .Values.configMap.data.METRICS_ENABLED | quote }}
+  MONITORING_INTERVAL: {{ .Values.configMap.data.MONITORING_INTERVAL | quote }}
+  PROMETHEUS_ENDPOINT: {{ .Values.configMap.data.PROMETHEUS_ENDPOINT | quote }}
+  HEALTH_CHECK_ENDPOINT: {{ .Values.configMap.data.HEALTH_CHECK_ENDPOINT | quote }}
+  
+  # 外部服务配置
+  AMAP_API_BASE_URL: {{ .Values.configMap.data.AMAP_API_BASE_URL | quote }}
+  
+  # 缓存配置
+  CACHE_TTL: {{ .Values.configMap.data.CACHE_TTL | quote }}
+  CACHE_MAX_SIZE: {{ .Values.configMap.data.CACHE_MAX_SIZE | quote }}
+  
+  # 支付系统配置
+  {{- if .Values.deployment.paymentProtection.enabled }}
+  PAYMENT_PROTECTION_ENABLED: "true"
+  PAYMENT_STRATEGY: {{ .Values.deployment.paymentProtection.strategy | quote }}
+  PAYMENT_MONITORING: {{ .Values.deployment.paymentProtection.monitoring | quote }}
+  {{- end }}
+  
+  # 自定义配置
+  {{- range $key, $value := .Values.configMap.data }}
+  {{- if not (has $key (list "NODE_ENV" "LOG_LEVEL" "METRICS_ENABLED" "MONITORING_INTERVAL" "PROMETHEUS_ENDPOINT" "HEALTH_CHECK_ENDPOINT" "AMAP_API_BASE_URL" "CACHE_TTL" "CACHE_MAX_SIZE")) }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+
+---
+# 监控系统集成配置
+{{- if .Values.global.monitoring.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "smart-travel.fullname" . }}-monitoring-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smart-travel.labels" . | nindent 4 }}
+    component: monitoring
+data:
+  # MetricsRegistry配置
+  metrics-registry.json: |
+    {
+      "enabled": {{ .Values.global.monitoring.metricsRegistry }},
+      "service": {
+        "name": "{{ include "smart-travel.fullname" . }}",
+        "version": "{{ .Values.app.version }}",
+        "environment": "{{ .Values.configMap.data.NODE_ENV }}"
+      },
+      "metrics": {
+        "http": {
+          "enabled": true,
+          "buckets": [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]
+        },
+        "payment": {
+          "enabled": true,
+          "buckets": [0.5, 1, 2, 5, 10, 30]
+        },
+        "business": {
+          "enabled": true,
+          "updateInterval": {{ .Values.configMap.data.MONITORING_INTERVAL }}
+        }
+      }
+    }
+  
+  # MetricsCollector配置
+  metrics-collector.json: |
+    {
+      "enabled": {{ .Values.global.monitoring.metricsCollector }},
+      "prometheus": {
+        "endpoint": "{{ .Values.configMap.data.PROMETHEUS_ENDPOINT }}",
+        "port": {{ .Values.app.port }},
+        "labels": {
+          "app": "{{ include "smart-travel.fullname" . }}",
+          "version": "{{ .Values.app.version }}",
+          "environment": "{{ .Values.configMap.data.NODE_ENV }}"
+        }
+      },
+      "collection": {
+        "interval": {{ .Values.configMap.data.MONITORING_INTERVAL }},
+        "timeout": 5000
+      }
+    }
+  
+  # ErrorHandler配置
+  error-handler.json: |
+    {
+      "enabled": {{ .Values.global.monitoring.errorHandler }},
+      "logging": {
+        "level": "{{ .Values.configMap.data.LOG_LEVEL }}",
+        "format": "json"
+      },
+      "metrics": {
+        "enabled": true,
+        "prefix": "smart_travel_errors"
+      },
+      "alerts": {
+        "enabled": true,
+        "thresholds": {
+          "error_rate": 0.05,
+          "response_time": 5.0
+        }
+      }
+    }
+{{- end }}

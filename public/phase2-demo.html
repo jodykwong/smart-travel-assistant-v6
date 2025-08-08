@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智游助手v6.2 - Phase 2架构优化成果演示</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            padding: 5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+            color: #667eea;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+
+        .metric-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .metric-improvement {
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .improvement-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .improvement-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .service-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .service-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .service-tencent {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .service-amap {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .travel-plan {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .day-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .day-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .day-content h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .day-activities {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .day-activities li {
+            padding: 5px 0;
+            color: #666;
+        }
+
+        .day-activities li:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .alert-critical {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .nav-tab {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .service-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-route"></i> 智游助手v6.2</h1>
+            <p>Phase 2架构优化成果演示 - 智能缓存 | 依赖注入 | 性能监控 | 腾讯地图集成</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('cache')">
+                <i class="fas fa-tachometer-alt"></i> 智能缓存策略
+            </button>
+            <button class="nav-tab" onclick="showTab('injection')">
+                <i class="fas fa-cubes"></i> 依赖注入重构
+            </button>
+            <button class="nav-tab" onclick="showTab('monitoring')">
+                <i class="fas fa-chart-line"></i> 性能监控增强
+            </button>
+            <button class="nav-tab" onclick="showTab('tencent')">
+                <i class="fas fa-map-marked-alt"></i> 腾讯地图集成
+            </button>
+        </div>
+
+        <!-- 智能缓存策略标签页 -->
+        <div id="cache" class="tab-content active">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-rocket card-icon"></i>
+                        <h3 class="card-title">缓存性能提升</h3>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">缓存命中率</span>
+                        <div>
+                            <span class="metric-value" id="cache-hit-rate">80.0%</span>
+                            <span class="metric-improvement improvement-positive">+237%</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">响应时间改进</span>
+                        <div>
+                            <span class="metric-value" id="response-improvement">79.9%</span>
+                            <span class="metric-improvement improvement-positive">超额达成</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">并发缓存命中率</span>
+                        <div>
+                            <span class="metric-value" id="concurrent-hit-rate">85.0%</span>
+                            <span class="metric-improvement improvement-positive">优秀</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-area card-icon"></i>
+                        <h3 class="card-title">响应时间对比</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="responseTimeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-database card-icon"></i>
+                        <h3 class="card-title">缓存状态监控</h3>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator status-healthy"></span>
+                            缓存服务状态
+                        </span>
+                        <span class="metric-value">正常运行</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">缓存大小</span>
+                        <span class="metric-value" id="cache-size">8,547</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">内存使用率</span>
+                        <span class="metric-value" id="memory-usage">67%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">清理次数</span>
+                        <span class="metric-value" id="cleanup-count">23</span>
+                    </div>
+                    <button class="refresh-btn" onclick="refreshCacheData()">
+                        <i class="fas fa-sync-alt"></i> 刷新数据
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 依赖注入重构标签页 -->
+        <div id="injection" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-code-branch card-icon"></i>
+                        <h3 class="card-title">构造函数优化</h3>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">重构前参数数量</span>
+                        <span class="metric-value">6个</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">重构后参数数量</span>
+                        <div>
+                            <span class="metric-value">1个</span>
+                            <span class="metric-improvement improvement-positive">-83.3%</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">代码复杂度</span>
+                        <div>
+                            <span class="metric-value">显著降低</span>
+                            <span class="metric-improvement improvement-positive">质的飞跃</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="parameterChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-heartbeat card-icon"></i>
+                        <h3 class="card-title">服务健康检查</h3>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator status-healthy"></span>
+                            地理服务
+                        </span>
+                        <span class="metric-value">健康</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator status-healthy"></span>
+                            质量监控
+                        </span>
+                        <span class="metric-value">健康</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator status-healthy"></span>
+                            缓存管理
+                        </span>
+                        <span class="metric-value">健康</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator status-healthy"></span>
+                            错误处理
+                        </span>
+                        <span class="metric-value">健康</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">整体健康评分</span>
+                        <span class="metric-value">100%</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-sitemap card-icon"></i>
+                        <h3 class="card-title">服务容器架构</h3>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                            <i class="fas fa-cube" style="font-size: 2rem; color: #667eea;"></i>
+                            <h4>ITravelServiceContainer</h4>
+                            <p style="color: #666; font-size: 0.9rem;">统一服务容器接口</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px;">
+                                <i class="fas fa-map"></i>
+                                <p>地理服务</p>
+                            </div>
+                            <div style="background: #f3e5f5; padding: 15px; border-radius: 8px;">
+                                <i class="fas fa-chart-bar"></i>
+                                <p>质量监控</p>
+                            </div>
+                            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px;">
+                                <i class="fas fa-database"></i>
+                                <p>缓存管理</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 性能监控增强标签页 -->
+        <div id="monitoring" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-tachometer-alt card-icon"></i>
+                        <h3 class="card-title">LangGraph执行监控</h3>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">活跃工作流</span>
+                        <span class="metric-value" id="active-workflows">3</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">节点执行次数</span>
+                        <span class="metric-value" id="node-executions">1,247</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">平均响应时间</span>
+                        <span class="metric-value" id="avg-response">331ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">成功率</span>
+                        <span class="metric-value" id="success-rate">98.5%</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="executionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle card-icon"></i>
+                        <h3 class="card-title">智能告警系统</h3>
+                    </div>
+                    <div id="alerts-container">
+                        <div class="alert-item alert-info">
+                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
+                            系统运行正常，所有服务状态良好
+                        </div>
+                        <div class="alert-item alert-warning">
+                            <i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>
+                            缓存使用率达到67%，建议关注
+                        </div>
+                    </div>
+                    <div class="metric" style="margin-top: 20px;">
+                        <span class="metric-label">告警规则数量</span>
+                        <span class="metric-value">4个</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">活跃告警</span>
+                        <span class="metric-value">1个</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-eye card-icon"></i>
+                        <h3 class="card-title">监控视图</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <i class="fas fa-chart-pie" style="font-size: 2rem; color: #667eea; margin-bottom: 10px;"></i>
+                            <h4>系统概览</h4>
+                            <p style="color: #666; font-size: 0.9rem;">整体状态监控</p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <i class="fas fa-project-diagram" style="font-size: 2rem; color: #28a745; margin-bottom: 10px;"></i>
+                            <h4>LangGraph</h4>
+                            <p style="color: #666; font-size: 0.9rem;">工作流监控</p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <i class="fas fa-layer-group" style="font-size: 2rem; color: #ffc107; margin-bottom: 10px;"></i>
+                            <h4>Phase 1</h4>
+                            <p style="color: #666; font-size: 0.9rem;">核心组件监控</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 腾讯地图集成标签页 -->
+        <div id="tencent" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-balance-scale card-icon"></i>
+                        <h3 class="card-title">服务质量对比</h3>
+                    </div>
+                    <div class="service-comparison">
+                        <div class="service-card service-tencent">
+                            <i class="fas fa-map" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <h4>腾讯地图</h4>
+                            <div style="margin-top: 15px;">
+                                <p>响应时间: <strong>960ms</strong></p>
+                                <p>准确率: <strong>92.2%</strong></p>
+                                <p>可用性: <strong>99.1%</strong></p>
+                            </div>
+                        </div>
+                        <div class="service-card service-amap">
+                            <i class="fas fa-route" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <h4>高德地图</h4>
+                            <div style="margin-top: 15px;">
+                                <p>响应时间: <strong>828ms</strong></p>
+                                <p>准确率: <strong>94.3%</strong></p>
+                                <p>可用性: <strong>99.5%</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 10px;">
+                        <i class="fas fa-trophy" style="color: #28a745; margin-right: 10px;"></i>
+                        <strong>智能推荐：高德地图</strong>（综合性能更优）
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt card-icon"></i>
+                        <h3 class="card-title">东三省文化探索之旅</h3>
+                    </div>
+                    <div class="travel-plan">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h2 style="color: #667eea; margin-bottom: 10px;">3天2夜 精品路线</h2>
+                            <p style="color: #666;">哈尔滨 → 沈阳 → 长春</p>
+                        </div>
+                        
+                        <div class="day-item">
+                            <div class="day-number">1</div>
+                            <div class="day-content">
+                                <h3>哈尔滨市 <span style="color: #666; font-size: 0.9rem;">25°C, 阴</span></h3>
+                                <p style="color: #667eea; margin-bottom: 10px;">
+                                    <i class="fas fa-map-marker-alt"></i> 中央大街 · 圣索菲亚大教堂
+                                </p>
+                                <ul class="day-activities">
+                                    <li>上午：中央大街漫步，感受欧式建筑风情</li>
+                                    <li>中午：品尝正宗东北菜，体验地方美食</li>
+                                    <li>下午：圣索菲亚大教堂参观，了解历史文化</li>
+                                    <li>晚上：松花江夜景，欣赏城市灯火</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="day-item">
+                            <div class="day-number">2</div>
+                            <div class="day-content">
+                                <h3>哈尔滨 → 沈阳 <span style="color: #666; font-size: 0.9rem;">25°C, 小雨</span></h3>
+                                <p style="color: #667eea; margin-bottom: 10px;">
+                                    <i class="fas fa-car"></i> 17公里 · 1小时车程
+                                </p>
+                                <ul class="day-activities">
+                                    <li>上午：驱车前往沈阳，沿途欣赏东北风光</li>
+                                    <li>下午：沈阳故宫游览，探索清朝历史</li>
+                                    <li>晚上：太原街购物美食，体验现代都市</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="day-item">
+                            <div class="day-number">3</div>
+                            <div class="day-content">
+                                <h3>沈阳 → 长春 <span style="color: #666; font-size: 0.9rem;">12°C, 阴</span></h3>
+                                <p style="color: #667eea; margin-bottom: 10px;">
+                                    <i class="fas fa-car"></i> 19公里 · 1小时车程
+                                </p>
+                                <ul class="day-activities">
+                                    <li>上午：前往长春，途中休息观光</li>
+                                    <li>下午：伪满皇宫博物院，了解近代历史</li>
+                                    <li>晚上：返程准备，结束愉快旅程</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 标签页切换功能
+        function showTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有标签按钮的激活状态
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // 根据标签页初始化图表
+            setTimeout(() => {
+                if (tabName === 'cache') {
+                    initResponseTimeChart();
+                } else if (tabName === 'injection') {
+                    initParameterChart();
+                } else if (tabName === 'monitoring') {
+                    initExecutionChart();
+                }
+            }, 100);
+        }
+
+        // 初始化响应时间对比图表
+        function initResponseTimeChart() {
+            const ctx = document.getElementById('responseTimeChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Phase 1基线', 'Phase 2优化后'],
+                    datasets: [{
+                        label: '平均响应时间 (ms)',
+                        data: [1713.9, 331.3],
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(40, 167, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(40, 167, 69, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '响应时间 (毫秒)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化参数数量对比图表
+        function initParameterChart() {
+            const ctx = document.getElementById('parameterChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['重构前', '重构后'],
+                    datasets: [{
+                        data: [6, 1],
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(40, 167, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(40, 167, 69, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化执行监控图表
+        function initExecutionChart() {
+            const ctx = document.getElementById('executionChart');
+            if (!ctx) return;
+            
+            const labels = [];
+            const data = [];
+            
+            // 生成最近24小时的模拟数据
+            for (let i = 23; i >= 0; i--) {
+                const hour = new Date();
+                hour.setHours(hour.getHours() - i);
+                labels.push(hour.getHours() + ':00');
+                data.push(Math.floor(Math.random() * 100) + 200);
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '节点执行次数',
+                        data: data,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '执行次数'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '时间'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 刷新缓存数据
+        function refreshCacheData() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loading"></div> 刷新中...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                // 模拟数据更新
+                document.getElementById('cache-hit-rate').textContent = (78 + Math.random() * 4).toFixed(1) + '%';
+                document.getElementById('cache-size').textContent = (8000 + Math.floor(Math.random() * 1000)).toLocaleString();
+                document.getElementById('memory-usage').textContent = (60 + Math.floor(Math.random() * 20)) + '%';
+                document.getElementById('cleanup-count').textContent = (20 + Math.floor(Math.random() * 10));
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                // 添加成功提示
+                const successMsg = document.createElement('div');
+                successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 5px; z-index: 1000;';
+                successMsg.innerHTML = '<i class="fas fa-check"></i> 数据刷新成功';
+                document.body.appendChild(successMsg);
+                
+                setTimeout(() => {
+                    document.body.removeChild(successMsg);
+                }, 3000);
+            }, 2000);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化默认图表
+            initResponseTimeChart();
+            
+            // 添加动画效果
+            document.querySelectorAll('.card').forEach((card, index) => {
+                card.style.animationDelay = (index * 0.1) + 's';
+                card.classList.add('fade-in');
+            });
+            
+            // 模拟实时数据更新
+            setInterval(() => {
+                const activeWorkflows = document.getElementById('active-workflows');
+                const nodeExecutions = document.getElementById('node-executions');
+                const avgResponse = document.getElementById('avg-response');
+                const successRate = document.getElementById('success-rate');
+                
+                if (activeWorkflows) {
+                    activeWorkflows.textContent = Math.floor(Math.random() * 5) + 1;
+                }
+                if (nodeExecutions) {
+                    nodeExecutions.textContent = (1200 + Math.floor(Math.random() * 100)).toLocaleString();
+                }
+                if (avgResponse) {
+                    avgResponse.textContent = (300 + Math.floor(Math.random() * 100)) + 'ms';
+                }
+                if (successRate) {
+                    successRate.textContent = (97 + Math.random() * 2).toFixed(1) + '%';
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

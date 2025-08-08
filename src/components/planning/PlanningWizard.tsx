@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Textarea } from '@/components/ui/Textarea';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { StepProgressBar } from '@/components/ui/StepProgressBar';
 import { Card } from '@/components/ui/Card';
 
 // ============= 表单验证Schema =============
@@ -168,7 +168,7 @@ export const PlanningWizard: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* 进度指示器 */}
         <div className="mb-8">
-          <ProgressBar
+          <StepProgressBar
             steps={STEPS}
             currentStep={currentStep}
             className="max-w-4xl mx-auto"
@@ -278,8 +278,119 @@ const Step1DestinationAndTime: React.FC<Step1Props> = ({ register, errors }) => 
   </div>
 );
 
-// 其他步骤组件的实现...
-// (由于篇幅限制，这里省略了Step2、Step3、Step4的完整实现)
+interface Step2Props {
+  register: any;
+  errors: any;
+  watchedValues: any;
+  onTravelStyleChange: (style: TravelStyle, checked: boolean) => void;
+  setValue: any;
+}
+
+const Step2BudgetAndStyle: React.FC<Step2Props> = ({ register, errors }) => (
+  <div className="space-y-6">
+    <div className="text-center mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">预算和旅行风格</h2>
+      <p className="text-gray-600">设置您的预算范围和偏好的旅行风格</p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          预算范围 (人民币)
+        </label>
+        <Select
+          {...register('budget')}
+          options={[
+            { value: 'budget', label: '经济型 (1000-3000元)' },
+            { value: 'mid-range', label: '中档 (3000-8000元)' },
+            { value: 'luxury', label: '豪华 (8000元以上)' }
+          ]}
+          placeholder="选择预算范围"
+        />
+        {errors.budget && (
+          <p className="mt-1 text-sm text-red-600">{errors.budget.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          旅行风格
+        </label>
+        <Select
+          {...register('travelStyle')}
+          options={[
+            { value: 'adventure', label: '冒险探索' },
+            { value: 'relaxation', label: '休闲放松' },
+            { value: 'cultural', label: '文化体验' },
+            { value: 'food', label: '美食之旅' }
+          ]}
+          placeholder="选择旅行风格"
+        />
+        {errors.travelStyle && (
+          <p className="mt-1 text-sm text-red-600">{errors.travelStyle.message}</p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+interface Step3Props {
+  register: any;
+  errors: any;
+  setValue: any;
+}
+
+const Step3Accommodation: React.FC<Step3Props> = ({ register, errors }) => (
+  <div className="space-y-6">
+    <div className="text-center mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">住宿偏好</h2>
+      <p className="text-gray-600">选择您偏好的住宿类型和要求</p>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        住宿类型
+      </label>
+      <Select
+        {...register('accommodation')}
+        options={[
+          { value: 'hotel', label: '酒店' },
+          { value: 'hostel', label: '青年旅社' },
+          { value: 'bnb', label: '民宿' },
+          { value: 'resort', label: '度假村' }
+        ]}
+        placeholder="选择住宿类型"
+      />
+      {errors.accommodation && (
+        <p className="mt-1 text-sm text-red-600">{errors.accommodation.message}</p>
+      )}
+    </div>
+  </div>
+);
+
+interface Step4Props {
+  watchedValues: any;
+}
+
+const Step4Confirmation: React.FC<Step4Props> = ({ watchedValues }) => (
+  <div className="space-y-6">
+    <div className="text-center mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">确认信息</h2>
+      <p className="text-gray-600">请确认您的旅行偏好信息</p>
+    </div>
+
+    <div className="bg-gray-50 p-6 rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">您的旅行计划</h3>
+      <div className="space-y-2">
+        <p><strong>目的地:</strong> {watchedValues.destination || '未选择'}</p>
+        <p><strong>出发日期:</strong> {watchedValues.startDate || '未选择'}</p>
+        <p><strong>返回日期:</strong> {watchedValues.endDate || '未选择'}</p>
+        <p><strong>预算:</strong> {watchedValues.budget || '未选择'}</p>
+        <p><strong>旅行风格:</strong> {watchedValues.travelStyle || '未选择'}</p>
+      </div>
+    </div>
+  </div>
+);
 
 // ============= 辅助函数 =============
 

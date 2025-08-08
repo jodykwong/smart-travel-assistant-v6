@@ -3,8 +3,9 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * 智游助手v6.0 全局测试清理
+ * 智游助手v6.2 全局测试清理
  * 在所有测试完成后执行的清理工作
+ * 重点清理P0级功能测试数据
  */
 async function globalTeardown(config: FullConfig) {
   console.log('🧹 开始全局测试清理');

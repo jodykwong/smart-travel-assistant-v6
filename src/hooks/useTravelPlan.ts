@@ -60,6 +60,7 @@ export const useTravelPlan = (options: UseTravelPlanOptions = {}): UseTravelPlan
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [options.autoRefresh, options.refreshInterval, plan]);
 
   // 定期清理缓存
@@ -98,16 +99,17 @@ export const useTravelPlan = (options: UseTravelPlanOptions = {}): UseTravelPlan
         setStats(result.stats);
 
         // 第二阶段重构：更新性能监控
-        if (result.performance) {
-          setPerformance(prev => ({
-            lastResponseTime: result.performance?.duration || 0,
+        if ((result as any).performance) {
+          const performance = (result as any).performance;
+          setPerformance((prev: any) => ({
+            lastResponseTime: performance?.duration || 0,
             averageResponseTime: prev ?
-              (prev.averageResponseTime + (result.performance?.duration || 0)) / 2 :
-              (result.performance?.duration || 0),
-            cacheHitRate: result.performance?.cacheHit ?
+              (prev.averageResponseTime + (performance?.duration || 0)) / 2 :
+              (performance?.duration || 0),
+            cacheHitRate: performance?.cacheHit ?
               (prev?.cacheHitRate || 0) * 0.9 + 0.1 :
               (prev?.cacheHitRate || 0) * 0.9,
-            dataQuality: result.performance?.dataQuality || 0,
+            dataQuality: performance?.dataQuality || 0,
           }));
         }
 
@@ -115,7 +117,7 @@ export const useTravelPlan = (options: UseTravelPlanOptions = {}): UseTravelPlan
           console.warn('创建计划时的警告:', result.warnings);
         }
 
-        console.log(`✅ 旅行计划创建成功 (响应时间: ${result.performance?.duration || 0}ms)`);
+        console.log(`✅ 旅行计划创建成功 (响应时间: ${(result as any).performance?.duration || 0}ms)`);
         return true;
       } else {
         setError(result.errors.join(', '));

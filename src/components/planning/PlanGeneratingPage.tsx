@@ -188,7 +188,7 @@ export const PlanGeneratingPage: React.FC = () => {
   if (!sessionId || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

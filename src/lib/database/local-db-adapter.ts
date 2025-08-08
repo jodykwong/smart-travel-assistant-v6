@@ -101,7 +101,7 @@ interface TravelPlan {
 // ============= SQLite适配器实现 =============
 
 export class SQLiteAdapter implements DatabaseAdapter {
-  private db: Database;
+  private db!: Database;
   private dbPath: string;
 
   constructor(dbPath: string = './dev.db') {
@@ -130,7 +130,8 @@ export class SQLiteAdapter implements DatabaseAdapter {
       console.log(`✅ SQLite数据库初始化成功: ${this.dbPath}`);
     } catch (error) {
       console.error('❌ SQLite数据库初始化失败:', error);
-      throw new Error(`数据库初始化失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`数据库初始化失败: ${errorMessage}`);
     }
   }
 
@@ -206,12 +207,17 @@ export class SQLiteAdapter implements DatabaseAdapter {
         JSON.stringify(userData.preferences || {})
       );
 
-      return this.getUserById(result.lastInsertRowid.toString());
+      const user = await this.getUserById(result.lastInsertRowid.toString());
+      if (!user) {
+        throw new Error('用户创建失败');
+      }
+      return user;
     } catch (error) {
-      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      if (error instanceof Error && 'code' in error && (error as any).code === 'SQLITE_CONSTRAINT_UNIQUE') {
         throw new Error('邮箱已被注册');
       }
-      throw new Error(`创建用户失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`创建用户失败: ${errorMessage}`);
     }
   }
 
@@ -252,7 +258,7 @@ export class SQLiteAdapter implements DatabaseAdapter {
           if (key === 'preferences') {
             return JSON.stringify(updates[key]);
           }
-          return updates[key];
+          return (updates as any)[key];
         });
 
       const stmt = this.db.prepare(`
@@ -263,9 +269,14 @@ export class SQLiteAdapter implements DatabaseAdapter {
       
       stmt.run(...values, id);
       
-      return this.getUserById(id);
+      const user = await this.getUserById(id);
+      if (!user) {
+        throw new Error('用户不存在');
+      }
+      return user;
     } catch (error) {
-      throw new Error(`更新用户失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`更新用户失败: ${errorMessage}`);
     }
   }
 
@@ -285,9 +296,14 @@ export class SQLiteAdapter implements DatabaseAdapter {
         sessionData.status
       );
 
-      return this.getSession(result.lastInsertRowid.toString());
+      const session = await this.getSession(result.lastInsertRowid.toString());
+      if (!session) {
+        throw new Error('会话创建失败');
+      }
+      return session;
     } catch (error) {
-      throw new Error(`创建会话失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`创建会话失败: ${errorMessage}`);
     }
   }
 
@@ -314,9 +330,9 @@ export class SQLiteAdapter implements DatabaseAdapter {
         .filter(key => !['id', 'createdAt'].includes(key))
         .map(key => {
           if (['preferences', 'result'].includes(key)) {
-            return JSON.stringify(updates[key]);
+            return JSON.stringify((updates as any)[key]);
           }
-          return updates[key];
+          return (updates as any)[key];
         });
 
       const stmt = this.db.prepare(`
@@ -327,9 +343,14 @@ export class SQLiteAdapter implements DatabaseAdapter {
       
       stmt.run(...values, sessionId);
       
-      return this.getSession(sessionId);
+      const session = await this.getSession(sessionId);
+      if (!session) {
+        throw new Error('会话不存在');
+      }
+      return session;
     } catch (error) {
-      throw new Error(`更新会话失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`更新会话失败: ${errorMessage}`);
     }
   }
 
@@ -338,7 +359,8 @@ export class SQLiteAdapter implements DatabaseAdapter {
       const stmt = this.db.prepare('DELETE FROM travel_sessions WHERE id = ?');
       stmt.run(sessionId);
     } catch (error) {
-      throw new Error(`删除会话失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`删除会话失败: ${errorMessage}`);
     }
   }
 

@@ -170,4 +170,5 @@ export const CardSkeleton: React.FC<{ className?: string }> = ({ className = '' 
   );
 };
 
+export { LoadingSpinner };
 export default LoadingSpinner;

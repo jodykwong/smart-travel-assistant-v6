@@ -1,0 +1,200 @@
+# 智游助手v6.2 告警规则
+# 基于现有架构的关键指标告警
+
+groups:
+  # 应用服务告警
+  - name: smart-travel-app-alerts
+    rules:
+      # 服务可用性告警
+      - alert: SmartTravelServiceDown
+        expr: up{job="smart-travel-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: smart-travel
+          team: backend
+        annotations:
+          summary: "智游助手服务不可用"
+          description: "智游助手v6.2服务已下线超过1分钟，请立即检查"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/service-down"
+
+      # 高错误率告警
+      - alert: SmartTravelHighErrorRate
+        expr: rate(http_requests_total{job="smart-travel-app",status=~"5.."}[5m]) / rate(http_requests_total{job="smart-travel-app"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: smart-travel
+          team: backend
+        annotations:
+          summary: "智游助手高错误率检测"
+          description: "5xx错误率为 {{ $value | humanizePercentage }}，超过5%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/high-error-rate"
+
+      # 响应时间告警
+      - alert: SmartTravelHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="smart-travel-app"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: smart-travel
+          team: backend
+        annotations:
+          summary: "智游助手响应时间过高"
+          description: "P95响应时间为 {{ $value }}s，超过2秒阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/high-response-time"
+
+  # 支付系统专项告警（基于隔离式支付验证架构）
+  - name: smart-travel-payment-alerts
+    rules:
+      # 支付成功率告警
+      - alert: PaymentSuccessRateLow
+        expr: smart_travel_payment_success_rate < 0.99
+        for: 2m
+        labels:
+          severity: critical
+          service: payment
+          team: payment
+        annotations:
+          summary: "支付成功率过低"
+          description: "支付成功率为 {{ $value | humanizePercentage }}，低于99%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/payment-failure"
+
+      # 支付响应时间告警
+      - alert: PaymentResponseTimeHigh
+        expr: smart_travel_payment_response_time_p95 > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: payment
+          team: payment
+        annotations:
+          summary: "支付响应时间过高"
+          description: "支付P95响应时间为 {{ $value }}s，超过5秒阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/payment-slow"
+
+      # 支付异常告警
+      - alert: PaymentAnomalyDetected
+        expr: increase(smart_travel_payment_errors_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: high
+          service: payment
+          team: payment
+        annotations:
+          summary: "支付异常检测"
+          description: "5分钟内支付错误数量为 {{ $value }}，超过10次阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/payment-anomaly"
+
+  # 系统资源告警
+  - name: smart-travel-system-alerts
+    rules:
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+          team: platform
+        annotations:
+          summary: "CPU使用率过高"
+          description: "{{ $labels.instance }} CPU使用率为 {{ $value }}%，超过80%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/high-cpu"
+
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+          team: platform
+        annotations:
+          summary: "内存使用率过高"
+          description: "{{ $labels.instance }} 内存使用率为 {{ $value }}%，超过85%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/high-memory"
+
+      # 磁盘使用率告警
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+          team: platform
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "{{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 使用率为 {{ $value }}%，超过90%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/high-disk"
+
+  # 数据库告警
+  - name: smart-travel-database-alerts
+    rules:
+      # MySQL连接数告警
+      - alert: MySQLConnectionsHigh
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+          team: dba
+        annotations:
+          summary: "MySQL连接数过高"
+          description: "MySQL连接使用率为 {{ $value | humanizePercentage }}，超过80%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/mysql-connections"
+
+      # MySQL慢查询告警
+      - alert: MySQLSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+          team: dba
+        annotations:
+          summary: "MySQL慢查询增加"
+          description: "MySQL慢查询速率为 {{ $value }}/s，超过0.1/s阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/mysql-slow-queries"
+
+      # Redis内存使用告警
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+          team: platform
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率为 {{ $value | humanizePercentage }}，超过90%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/redis-memory"
+
+  # 业务指标告警
+  - name: smart-travel-business-alerts
+    rules:
+      # 用户注册转化率告警
+      - alert: UserRegistrationRateLow
+        expr: smart_travel_user_registration_rate < 0.15
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+          team: product
+        annotations:
+          summary: "用户注册转化率过低"
+          description: "用户注册转化率为 {{ $value | humanizePercentage }}，低于15%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/low-conversion"
+
+      # 订单完成率告警
+      - alert: OrderCompletionRateLow
+        expr: smart_travel_order_completion_rate < 0.95
+        for: 15m
+        labels:
+          severity: warning
+          service: business
+          team: product
+        annotations:
+          summary: "订单完成率过低"
+          description: "订单完成率为 {{ $value | humanizePercentage }}，低于95%阈值"
+          runbook_url: "https://wiki.smarttravel.com/runbooks/low-order-completion"

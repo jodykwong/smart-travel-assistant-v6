@@ -107,7 +107,7 @@ export class AmapMCPOfficialClient {
       console.log('✅ 高德MCP客户端初始化完成');
     } catch (error) {
       console.error('❌ 高德MCP初始化失败:', error);
-      throw new Error(`MCP初始化失败: ${error.message}`);
+      throw new Error(`MCP初始化失败: ${(error as Error).message}`);
     }
   }
 
@@ -175,7 +175,7 @@ export class AmapMCPOfficialClient {
       return {
         content: [{
           type: 'text',
-          text: `工具调用失败: ${error.message}`,
+          text: `工具调用失败: ${(error as Error).message}`,
         }],
         isError: true,
       };
@@ -210,7 +210,7 @@ export class AmapMCPOfficialClient {
         return response.json();
       }
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         throw new Error(`请求超时 (${this.timeout}ms)`);
       }
       throw error;

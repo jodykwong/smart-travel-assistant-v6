@@ -1,0 +1,226 @@
+# 智游助手v6.2 AlertManager配置
+# 基于现有架构的智能告警管理
+
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@smarttravel.com'
+  smtp_auth_username: 'alerts@smarttravel.com'
+  smtp_auth_password: 'your_app_password'
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+# 告警路由配置
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default'
+  routes:
+    # 关键告警路由
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 5m
+      routes:
+        # 支付系统关键告警
+        - match:
+            service: payment
+          receiver: 'payment-critical'
+        # 应用服务关键告警
+        - match:
+            service: smart-travel
+          receiver: 'app-critical'
+
+    # 支付团队告警路由
+    - match:
+        team: payment
+      receiver: 'payment-team'
+      group_by: ['alertname', 'service']
+
+    # 后端团队告警路由
+    - match:
+        team: backend
+      receiver: 'backend-team'
+      group_by: ['alertname', 'service']
+
+    # 平台团队告警路由
+    - match:
+        team: platform
+      receiver: 'platform-team'
+      group_by: ['alertname', 'service']
+
+    # 产品团队告警路由
+    - match:
+        team: product
+      receiver: 'product-team'
+      group_by: ['alertname', 'service']
+
+# 告警抑制规则
+inhibit_rules:
+  # 如果服务下线，抑制该服务的其他告警
+  - source_match:
+      alertname: SmartTravelServiceDown
+    target_match_re:
+      alertname: (SmartTravelHighErrorRate|SmartTravelHighResponseTime|PaymentSuccessRateLow)
+    equal: ['service']
+
+  # 如果数据库下线，抑制数据库相关告警
+  - source_match:
+      alertname: MySQLConnectionsHigh
+    target_match_re:
+      alertname: (MySQLSlowQueries)
+    equal: ['instance']
+
+  # 如果系统资源告警，抑制应用性能告警
+  - source_match_re:
+      alertname: (HighCPUUsage|HighMemoryUsage)
+    target_match:
+      alertname: SmartTravelHighResponseTime
+    equal: ['instance']
+
+# 告警接收器配置
+receivers:
+  # 默认接收器
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts'
+        title: '智游助手v6.2 告警'
+        text: |
+          {{ range .Alerts }}
+          **告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **服务**: {{ .Labels.service }}
+          **严重程度**: {{ .Labels.severity }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+
+  # 关键告警接收器
+  - name: 'critical-alerts'
+    slack_configs:
+      - channel: '#critical-alerts'
+        title: '🚨 CRITICAL: 智游助手v6.2 关键告警'
+        text: |
+          {{ range .Alerts }}
+          **🚨 关键告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **服务**: {{ .Labels.service }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**紧急处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+    email_configs:
+      - to: 'oncall@smarttravel.com'
+        subject: '🚨 CRITICAL Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        body: |
+          智游助手v6.2关键告警通知
+          
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          服务: {{ .Labels.service }}
+          严重程度: {{ .Labels.severity }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}处理手册: {{ .Annotations.runbook_url }}{{ end }}
+          
+          {{ end }}
+          
+          请立即处理此告警。
+
+  # 支付系统关键告警
+  - name: 'payment-critical'
+    slack_configs:
+      - channel: '#payment-critical'
+        title: '💳 CRITICAL: 支付系统关键告警'
+        text: |
+          {{ range .Alerts }}
+          **💳 支付系统关键告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          **处理手册**: {{ .Annotations.runbook_url }}
+          
+          **注意**: 这可能影响用户支付，请立即处理！
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+    email_configs:
+      - to: 'payment-team@smarttravel.com,cto@smarttravel.com'
+        subject: '💳 CRITICAL: 支付系统告警 - {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  # 应用服务关键告警
+  - name: 'app-critical'
+    slack_configs:
+      - channel: '#app-critical'
+        title: '🔥 CRITICAL: 应用服务关键告警'
+        text: |
+          {{ range .Alerts }}
+          **🔥 应用服务关键告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          **处理手册**: {{ .Annotations.runbook_url }}
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+
+  # 支付团队告警
+  - name: 'payment-team'
+    slack_configs:
+      - channel: '#payment-alerts'
+        title: '💳 支付系统告警'
+        text: |
+          {{ range .Alerts }}
+          **告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **严重程度**: {{ .Labels.severity }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+
+  # 后端团队告警
+  - name: 'backend-team'
+    slack_configs:
+      - channel: '#backend-alerts'
+        title: '⚙️ 后端服务告警'
+        text: |
+          {{ range .Alerts }}
+          **告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **严重程度**: {{ .Labels.severity }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+
+  # 平台团队告警
+  - name: 'platform-team'
+    slack_configs:
+      - channel: '#platform-alerts'
+        title: '🖥️ 平台基础设施告警'
+        text: |
+          {{ range .Alerts }}
+          **告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **严重程度**: {{ .Labels.severity }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+
+  # 产品团队告警
+  - name: 'product-team'
+    slack_configs:
+      - channel: '#product-alerts'
+        title: '📊 业务指标告警'
+        text: |
+          {{ range .Alerts }}
+          **告警**: {{ .Annotations.summary }}
+          **描述**: {{ .Annotations.description }}
+          **严重程度**: {{ .Labels.severity }}
+          **时间**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .Annotations.runbook_url }}**处理手册**: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true

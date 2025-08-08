@@ -1,0 +1,360 @@
+{
+  "config": {
+    "configFile": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/playwright.config.ts",
+    "rootDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "unit",
+        "name": "unit",
+        "testDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/tests/unit/**/*.{test,spec}.{js,ts}"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "integration",
+        "name": "integration",
+        "testDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/tests/integration/**/*.{test,spec}.{js,ts}"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "e2e-chromium",
+        "name": "e2e-chromium",
+        "testDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/tests/e2e/**/*.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "e2e-firefox",
+        "name": "e2e-firefox",
+        "testDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/tests/e2e/**/*.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "performance",
+        "name": "performance",
+        "testDir": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.2/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/tests/performance/**/*.{test,spec}.{js,ts}"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev",
+      "port": 3001,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "e2e/travel-planning-flow.spec.ts",
+      "file": "e2e/travel-planning-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "智游助手 - 完整旅游规划流程",
+          "file": "e2e/travel-planning-flow.spec.ts",
+          "line": 120,
+          "column": 6,
+          "specs": [
+            {
+              "title": "完整的旅游规划流程测试",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e-chromium",
+                  "projectName": "e2e-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 13220,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🚀 开始完整旅游规划流程测试...\n"
+                        },
+                        {
+                          "text": "📍 步骤1: 访问主页\n"
+                        },
+                        {
+                          "text": "✅ 主页加载成功\n"
+                        },
+                        {
+                          "text": "📍 步骤2: 导航到规划页面\n"
+                        },
+                        {
+                          "text": "✅ 规划页面加载成功\n"
+                        },
+                        {
+                          "text": "📍 步骤3: 填写旅游问卷\n"
+                        },
+                        {
+                          "text": "📝 开始填写第1步：基本信息\n"
+                        },
+                        {
+                          "text": "📝 开始填写第2步：预算和风格\n"
+                        },
+                        {
+                          "text": "📝 开始填写第3步：住宿偏好和特殊要求\n"
+                        },
+                        {
+                          "text": "📝 到达第4步：确认页面\n"
+                        },
+                        {
+                          "text": "✅ 表单填写完成\n"
+                        },
+                        {
+                          "text": "📍 步骤4: 提交表单并等待生成规划\n"
+                        },
+                        {
+                          "text": "发现 1 个按钮\n"
+                        },
+                        {
+                          "text": "按钮 1: \"取消生成\" (可见: true)\n"
+                        },
+                        {
+                          "text": "✅ 找到提交按钮: button:visible:last-child\n"
+                        },
+                        {
+                          "text": "📍 步骤5: 验证生成的旅游规划\n"
+                        },
+                        {
+                          "text": "✅ 行程安排已生成\n"
+                        },
+                        {
+                          "text": "✅ 住宿信息已包含\n"
+                        },
+                        {
+                          "text": "📍 步骤6: 验证页面交互功能\n"
+                        },
+                        {
+                          "text": "✅ 未发现JavaScript错误\n"
+                        },
+                        {
+                          "text": "🎉 完整旅游规划流程测试完成！\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-07T16:34:36.145Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d7cfe3a371832b3dfa67-e476299a7bedf170be59",
+              "file": "e2e/travel-planning-flow.spec.ts",
+              "line": 130,
+              "column": 7
+            },
+            {
+              "title": "表单验证测试",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e-chromium",
+                  "projectName": "e2e-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4688,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🧪 开始表单验证测试...\n"
+                        },
+                        {
+                          "text": "✅ 表单验证正常工作，空表单时下一步按钮被禁用\n"
+                        },
+                        {
+                          "text": "✅ 部分填写时按钮仍被禁用，验证逻辑正确\n"
+                        },
+                        {
+                          "text": "📝 发现 1 个验证提示消息\n"
+                        },
+                        {
+                          "text": "   提示 1: \n"
+                        },
+                        {
+                          "text": "✅ 表单验证测试完成\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-07T16:34:49.803Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d7cfe3a371832b3dfa67-09e971f99f24f80df36a",
+              "file": "e2e/travel-planning-flow.spec.ts",
+              "line": 267,
+              "column": 7
+            },
+            {
+              "title": "响应式设计测试",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e-chromium",
+                  "projectName": "e2e-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3874,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "📱 开始响应式设计测试...\n"
+                        },
+                        {
+                          "text": "✅ 移动端视图正常\n"
+                        },
+                        {
+                          "text": "✅ 平板视图正常\n"
+                        },
+                        {
+                          "text": "✅ 响应式设计测试完成\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-07T16:34:54.497Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d7cfe3a371832b3dfa67-7f3df78e86e5495bf2af",
+              "file": "e2e/travel-planning-flow.spec.ts",
+              "line": 313,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-07T16:34:34.911Z",
+    "duration": 23569.412,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,408 @@
+# 智游助手v6.2 Helm Chart Values
+# Week 5-6: CD Pipeline构建 - 标准化配置
+
+# 全局配置
+global:
+  # 镜像仓库配置（基于阶段一Harbor部署）
+  imageRegistry: harbor.smarttravel.local
+  imageProject: smart-travel
+  imagePullSecrets:
+    - name: harbor-registry-secret
+
+  # 存储类配置（基于阶段一K3s集群）
+  storageClass: local-path
+
+  # 监控配置（集成现有监控系统）
+  monitoring:
+    enabled: true
+    namespace: monitoring
+    metricsRegistry: true
+    metricsCollector: true
+    errorHandler: true
+
+  # 安全配置
+  security:
+    enabled: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+# 应用配置
+app:
+  name: smart-travel-assistant
+  version: "6.2.0"
+
+  # 镜像配置（使用Harbor镜像仓库）
+  image:
+    repository: smart-travel-assistant
+    tag: "6.2.0"
+    pullPolicy: IfNotPresent
+
+  # 副本配置
+  replicaCount: 3
+
+  # 端口配置
+  port: 3000
+
+  # 环境变量（集成现有监控系统）
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: info
+    METRICS_ENABLED: "true"
+    MONITORING_INTERVAL: "15000"
+    PROMETHEUS_ENDPOINT: "/api/metrics"
+    HEALTH_CHECK_ENDPOINT: "/api/health"
+
+  # 资源配置
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+# 部署策略
+deployment:
+  strategy: RollingUpdate
+  maxUnavailable: "25%"
+  maxSurge: "25%"
+
+  # 支付系统特殊配置
+  paymentProtection:
+    enabled: true
+    strategy: "blue-green"
+    monitoring: "enhanced"
+  
+# 服务配置
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations: {}
+
+# Ingress配置
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: smarttravel.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: smarttravel-tls
+      hosts:
+        - smarttravel.com
+
+# 环境变量
+env:
+  NODE_ENV: production
+  PORT: "3000"
+  
+  # 数据库配置
+  DATABASE_URL: "postgresql://user:password@postgres:5432/smart_travel"
+  REDIS_URL: "redis://redis:6379"
+  
+  # 监控配置
+  MONITORING_ENABLED: "true"
+  PROMETHEUS_ENDPOINT: "http://prometheus:9090"
+  GRAFANA_ENDPOINT: "http://grafana:3000"
+  
+  # 支付配置
+  PAYMENT_WECHAT_APP_ID: ""
+  PAYMENT_WECHAT_MCH_ID: ""
+  PAYMENT_ALIPAY_APP_ID: ""
+  
+  # 高德地图配置
+  AMAP_API_KEY: ""
+  AMAP_SECRET_KEY: ""
+  
+  # 云服务配置
+  CLOUD_PROVIDER: "local" # local | tencent | aliyun
+  CLOUD_REGION: "default"
+
+# 密钥配置
+secrets:
+  # 数据库密钥
+  database:
+    username: "smart_travel_user"
+    password: "change_me_in_production"
+  
+  # Redis密钥
+  redis:
+    password: "change_me_in_production"
+  
+  # JWT密钥
+  jwt:
+    secret: "change_me_in_production"
+    refreshSecret: "change_me_in_production"
+  
+  # 支付密钥
+  payment:
+    wechatSecret: "change_me_in_production"
+    alipayPrivateKey: "change_me_in_production"
+  
+  # 云服务密钥
+  cloud:
+    tencentSecretId: ""
+    tencentSecretKey: ""
+    aliyunAccessKeyId: ""
+    aliyunAccessKeySecret: ""
+
+# 资源限制
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# 自动扩缩容
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# 健康检查
+healthcheck:
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 3000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# 存储配置
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# 数据库配置
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "change_me_in_production"
+    username: "smart_travel_user"
+    password: "change_me_in_production"
+    database: "smart_travel"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis配置
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "change_me_in_production"
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# 监控配置
+monitoring:
+  enabled: true
+  
+  # Prometheus监控
+  prometheus:
+    enabled: true
+    endpoint: "http://prometheus:9090"
+    scrapeInterval: "15s"
+    
+  # ServiceMonitor配置
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    labels:
+      app: smart-travel
+    interval: 15s
+    path: /api/metrics
+    
+  # 告警规则
+  prometheusRule:
+    enabled: true
+    namespace: monitoring
+    labels:
+      app: smart-travel
+    rules:
+      - alert: SmartTravelDown
+        expr: up{job="smart-travel"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "智游助手服务不可用"
+          description: "智游助手服务已经下线超过1分钟"
+      
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket{job="smart-travel"}) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API响应时间过长"
+          description: "95%分位响应时间超过2秒"
+      
+      - alert: PaymentSuccessRateLow
+        expr: smart_travel_payment_success_rate < 0.95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "支付成功率过低"
+          description: "支付成功率低于95%"
+
+# 日志配置
+logging:
+  enabled: true
+  level: "info"
+  format: "json"
+  
+  # Fluentd配置
+  fluentd:
+    enabled: true
+    image: fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch
+    elasticsearch:
+      host: "elasticsearch"
+      port: 9200
+      index: "smart-travel"
+
+# 安全配置
+security:
+  # Pod安全策略
+  podSecurityPolicy:
+    enabled: true
+  
+  # 网络策略
+  networkPolicy:
+    enabled: true
+    ingress:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        ports:
+        - protocol: TCP
+          port: 3000
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        ports:
+        - protocol: TCP
+          port: 3000
+  
+  # RBAC配置
+  rbac:
+    create: true
+  
+  # ServiceAccount配置
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+# 云服务适配器配置
+cloudAdapter:
+  enabled: true
+  image:
+    repository: smart-travel/cloud-adapter
+    tag: "latest"
+  
+  # 腾讯云配置
+  tencent:
+    enabled: false
+    region: "ap-beijing"
+    secretId: ""
+    secretKey: ""
+    
+  # 阿里云配置
+  aliyun:
+    enabled: false
+    region: "cn-beijing"
+    accessKeyId: ""
+    accessKeySecret: ""
+
+# 备份配置
+backup:
+  enabled: true
+  schedule: "0 2 * * *" # 每天凌晨2点
+  retention: "7d"
+  
+  # 数据库备份
+  database:
+    enabled: true
+    s3:
+      bucket: "smart-travel-backups"
+      region: "us-east-1"
+      accessKey: ""
+      secretKey: ""
+  
+  # 文件备份
+  files:
+    enabled: true
+    paths:
+      - "/app/uploads"
+      - "/app/logs"
+
+# 开发环境配置
+development:
+  enabled: false
+  debug: true
+  hotReload: true
+  
+# 测试环境配置
+staging:
+  enabled: false
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# 生产环境配置
+production:
+  enabled: true
+  replicas: 3
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
