@@ -1,8 +1,8 @@
-# 智游助手v5.0 环境配置与运行指南
+# 智游助手v6.5 环境配置与运行指南
 
 ## 📋 概述
 
-本指南将帮助您配置智游助手v5.0项目的开发环境，包括DeepSeek API集成、高德MCP服务配置，以及4个核心Jupyter Notebook的运行。
+本指南用于配置智游助手 v6.5 开发环境，涵盖 DeepSeek/SiliconFlow 双链路、地图 MCP（高德/腾讯，经由 LLM 工具）双链路冗余，以及 4 个核心 Jupyter Notebook 的运行。
 
 ## 🔧 前置要求
 
@@ -43,29 +43,54 @@ cp .env.example .env
 nano .env  # 或使用您喜欢的编辑器
 ```
 
-#### 2.2 必需的环境变量
+#### 2.2 必需的环境变量（v6.5 双链路）
 
-**DeepSeek API配置**：
+**LLM（DeepSeek 主 + SiliconFlow 备）**：
 ```env
-# DeepSeek API密钥 (必需)
-DEEPSEEK_API_KEY=your_deepseek_api_key_here
+# DeepSeek 主链路
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_API_URL=https://api.deepseek.com/v1
+DEEPSEEK_MODEL_NAME=deepseek-chat
 
-# DeepSeek API配置
-DEEPSEEK_API_BASE_URL=https://api.deepseek.com/v1
-DEEPSEEK_MODEL=deepseek-chat
-DEEPSEEK_MAX_TOKENS=4000
-DEEPSEEK_TEMPERATURE=0.7
+# SiliconFlow 备链路
+SILICONFLOW_API_KEY=your_siliconflow_api_key
+SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+SILICONFLOW_DEEPSEEK_MODEL=deepseek-ai/DeepSeek-V3
+
+# LLM failover
+LLM_PROVIDERS=deepseek,siliconflow
+LLM_PRIMARY_PROVIDER=deepseek
+LLM_FALLBACK_PROVIDER=siliconflow
 ```
 
-**高德MCP配置**：
+**地图 MCP（AMap 主 + Tencent 备，经由 LLM 工具）**：
 ```env
-# 高德地图MCP API密钥 (必需)
-AMAP_MCP_API_KEY=your_amap_key_here
+# 高德 MCP（官方 SSE）
+AMAP_MCP_SERVER_URL=https://mcp.amap.com/sse
+AMAP_MCP_API_KEY=your_amap_key
+MCP_AMAP_ENABLED=true
 
-# 高德MCP服务端点
-AMAP_MCP_BASE_URL=http://localhost:8080/mcp
-AMAP_MCP_TIMEOUT=30000
-AMAP_MCP_MAX_CONCURRENT=4
+# 腾讯 MCP
+TENCENT_MCP_BASE_URL=https://apis.map.qq.com/mcp
+TENCENT_MCP_API_KEY=your_tencent_key
+MCP_TENCENT_ENABLED=true
+
+# MCP 传输
+MCP_TRANSPORT_TYPE=sse
+MCP_TIMEOUT=30000
+MCP_RETRY_ATTEMPTS=3
+```
+
+**Failover 统一配置**：
+```env
+FAILOVER_ENABLED=true
+FAILOVER_TIMEOUT=5000
+FAILOVER_RETRY_ATTEMPTS=3
+FAILOVER_CIRCUIT_BREAKER_THRESHOLD=5
+LOAD_BALANCER_STRATEGY=health_based
+HEALTH_CHECK_ENABLED=true
+HEALTH_CHECK_INTERVAL=30000
+HEALTH_CHECK_TIMEOUT=5000
 ```
 
 **LangGraph配置**：

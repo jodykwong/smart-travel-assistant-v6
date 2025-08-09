@@ -1,14 +1,16 @@
-# 智游助手v6.0 - 企业级AI旅行规划系统
+# 智游助手v6.5 - 企业级AI旅行规划系统
 
-[![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)](https://github.com/your-repo/smart-travel-assistant)
+[![Version](https://img.shields.io/badge/version-6.5-blue.svg)](https://github.com/your-repo/smart-travel-assistant)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/your-repo/smart-travel-assistant/actions)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen.svg)](https://codecov.io/gh/your-repo/smart-travel-assistant)
 
-**版本**: v6.0.0
-**发布日期**: 2025年8月2日
-**技术栈**: Next.js 15 + React 18 + TypeScript + LangGraph + DeepSeek + 高德MCP + Redis缓存
+**版本**: v6.5
+**发布日期**: 2025年8月9日
+**技术栈**: Next.js 15 + React 18 + TypeScript + LangGraph + DeepSeek + 高德/腾讯 MCP（通过LLM工具）+ Redis缓存
 **商业化就绪度**: 90%
+- 运维指南：docs/OPERATIONS_FAILOVER_GUIDE.md（故障转移演练与健康检查）
+
 
 ## 🌟 项目概述
 
@@ -35,10 +37,17 @@
 - **精美结果展示**: 专业级旅行计划报告
 
 ### 📍 地理数据集成
-- **高德地图MCP**: 真实的POI搜索和地理编码
-- **智能推荐**: 基于地理位置的个性化推荐
-- **天气信息**: 实时天气数据集成
-- **交通规划**: 智能交通路线规划
+- **地图MCP双链路**: 高德MCP（主）+ 腾讯MCP（备），通过 LLM function calling 调用，无直连地图API
+- **智能推荐**: 基于地理位置的个性化推荐（美食/文化/购物/自然）
+- **天气信息**: 实时天气数据（东三省测试：哈尔滨/长春/沈阳）
+- **交通规划**: 公交/驾车/步行等多方式对比与优化
+
+### 🔄 双链路冗余（v6.5 新增）
+- **LLM**：DeepSeek（主）+ SiliconFlow（备），支持超时/重试/熔断/健康检查/自动回切
+- **地图MCP**：高德（主）+ 腾讯（备），严格通过 LLM function calling，禁止直连地图 API
+- **测试约束**：东三省（哈尔滨、长春、沈阳）为验收基线城市
+- 详见：docs/failover-architecture.md
+
 
 ### 🛡️ 企业级架构
 - **TypeScript全栈**: 类型安全的开发体验
@@ -86,13 +95,16 @@ Testing: Vitest + Playwright
 - **动画效果**: Framer Motion提供流畅的交互体验
 - **错误处理**: 用户友好的错误提示和恢复机制
 
-## 🛠 技术栈
+## 🛠 技术栈（v6.5）
+
+### 服务层
+- **LLM双链路**：DeepSeek（主）+ SiliconFlow（备），熔断/重试/健康检查/自动回切
+- **地图MCP双链路**：高德（主）+ 腾讯（备），仅通过 LLM tools 调用
+- **Failover内核**：CircuitBreaker + HealthChecker + Load Balancer
 
 ### 前端技术
-- **HTML5**：语义化标签，确保页面结构清晰
-- **TailwindCSS**：原子化CSS框架，快速构建现代UI
-- **FontAwesome**：丰富的图标库，提升视觉效果
-- **JavaScript ES6+**：现代JavaScript特性，优化交互体验
+- **Next.js 15** + **React 18** + **TypeScript**
+- **TailwindCSS** + **Framer Motion**
 
 ### 设计系统
 - **颜色方案**：

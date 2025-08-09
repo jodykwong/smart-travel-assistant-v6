@@ -1,14 +1,14 @@
-# 智游助手 v6.1.0-beta.2 开发环境搭建指南
+# 智游助手 v6.5 开发环境搭建指南
 
 ## 🎯 项目概述
 
-本项目是基于 **v6.1.0-beta.2** 版本的智游助手AI旅行规划系统，已成功拉取到本地并配置好开发环境。
+本项目基于 **v6.5** 版本的智游助手AI旅行规划系统，已成功拉取到本地并配置好开发环境。
 
 ## ✅ 已完成的配置
 
 ### 1. 代码拉取
-- ✅ 从 GitHub 仓库克隆了 v6.1.0-beta.2 版本
-- ✅ 创建了开发分支 `development-v6.1.0-beta.2`
+- ✅ 从 GitHub 仓库同步到 v6.5 开发基线
+- ✅ 创建了开发分支 `development-v6.5`
 - ✅ 当前工作目录：`/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5`
 
 ### 2. 环境配置
@@ -64,7 +64,7 @@ npm run type-check
 npm run format
 ```
 
-## 🔧 环境变量配置
+## 🔧 环境变量配置（v6.5 双链路）
 
 ### 必需配置
 在开始开发前，需要配置以下关键的 API 密钥：
@@ -73,14 +73,43 @@ npm run format
 # 编辑 .env 文件
 nano .env
 
-# 配置以下必需的 API 密钥：
-DEEPSEEK_API_KEY=your_deepseek_api_key_here
-AMAP_MCP_API_KEY=your_amap_key_here
+# LLM（主备）
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_API_URL=https://api.deepseek.com/v1
+DEEPSEEK_MODEL_NAME=deepseek-chat
+SILICONFLOW_API_KEY=your_siliconflow_api_key
+SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+SILICONFLOW_DEEPSEEK_MODEL=deepseek-ai/DeepSeek-V3
+LLM_PROVIDERS=deepseek,siliconflow
+LLM_PRIMARY_PROVIDER=deepseek
+LLM_FALLBACK_PROVIDER=siliconflow
+
+# 地图 MCP（经由 LLM 工具）
+AMAP_MCP_SERVER_URL=https://mcp.amap.com/sse
+AMAP_MCP_API_KEY=your_amap_key
+MCP_AMAP_ENABLED=true
+TENCENT_MCP_BASE_URL=https://apis.map.qq.com/mcp
+TENCENT_MCP_API_KEY=your_tencent_key
+MCP_TENCENT_ENABLED=true
+MCP_TRANSPORT_TYPE=sse
+MCP_TIMEOUT=30000
+MCP_RETRY_ATTEMPTS=3
+
+# Failover
+FAILOVER_ENABLED=true
+FAILOVER_TIMEOUT=5000
+FAILOVER_RETRY_ATTEMPTS=3
+FAILOVER_CIRCUIT_BREAKER_THRESHOLD=5
+LOAD_BALANCER_STRATEGY=health_based
+HEALTH_CHECK_ENABLED=true
+HEALTH_CHECK_INTERVAL=30000
+HEALTH_CHECK_TIMEOUT=5000
 ```
 
 ### API 密钥获取
 1. **DeepSeek API**: https://platform.deepseek.com/api-keys
 2. **高德地图 API**: https://console.amap.com/dev/key/app
+3. **腾讯地图 API**: https://lbs.qq.com
 
 ## 📋 技术栈
 
@@ -207,5 +236,5 @@ git push origin feature/your-feature-name
 ---
 
 **项目状态**: ✅ 开发环境已就绪
-**版本**: v6.1.0-beta.2
+**版本**: v6.5
 **最后更新**: 2025年8月9日

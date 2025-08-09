@@ -1,4 +1,4 @@
-# 智游助手v6.0 - API文档
+# 智游助手v6.5 - API文档
 
 ## 📋 目录
 
@@ -454,6 +454,28 @@ GET /api/health
     }
   }
 }
+
+### 5.3 冗余健康状态（建议）
+
+> 说明：v6.5 引入 LLM 与 地图MCP 的 failover 机制。建议新增只读端点（若后续启用）：
+
+```http
+GET /api/health/failover
+```
+
+响应建议（示例）：
+```json
+{
+  "success": true,
+  "data": {
+    "llm": { "deepseek": "healthy", "siliconflow": "healthy" },
+    "map": { "amap": "healthy", "tencent": "healthy" },
+    "circuit": { "deepseek": "closed", "siliconflow": "closed", "amap": "closed", "tencent": "closed" },
+    "timestamp": "2025-08-09T00:00:00.000Z"
+  }
+}
+```
+
 ```
 
 ### 5.2 高德API诊断
@@ -624,6 +646,6 @@ result = client.planning.get_session(session['sessionId'])
 
 ---
 
-**API文档版本**: v6.0.0  
-**最后更新**: 2025年8月2日  
+**API文档版本**: v6.5
+**最后更新**: 2025年8月9日
 **维护团队**: 智游助手开发团队

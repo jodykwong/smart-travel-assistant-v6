@@ -1,7 +1,7 @@
 {
   "name": "smart-travel-assistant-v6",
-  "version": "6.0.0",
-  "description": "Enterprise-grade AI travel planning system with multi-layer caching, real-time progress tracking, and commercial deployment readiness",
+  "version": "6.5.0",
+  "description": "Enterprise-grade AI travel planning system (v6.5) with LLM+Map dual-link failover (DeepSeek/SiliconFlow + AMap/Tencent MCP via LLM tools)",
   "private": true,
   "scripts": {
     "dev": "next dev",
