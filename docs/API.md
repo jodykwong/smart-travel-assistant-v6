@@ -624,6 +624,102 @@ client.planning.onProgress(session.sessionId, (progress) => {
 from smart_travel import SmartTravelAPI
 
 client = SmartTravelAPI(
+
+---
+
+## 9. 东三省验收用例（v6.5 双链路冗余）
+
+本章节定义了哈尔滨、长春、沈阳三座城市的双链路冗余系统验收基线与测试方法。
+
+### 9.1 目标城市
+- 哈尔滨（黑龙江省）
+- 长春（吉林省）
+- 沈阳（辽宁省）
+
+> 说明：所有地图数据访问必须通过 LLM 的 function calling 机制调用 MCP 工具，严禁直连地图 API。
+
+### 9.2 典型 API 请求示例
+
+#### 9.2.1 创建规划会话（以哈尔滨为例）
+```http
+POST /api/v1/planning/sessions
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+  "destination": "哈尔滨",
+  "startDate": "2025-12-20",
+  "endDate": "2025-12-26",
+  "budget": "medium",
+  "travelStyle": ["culture", "food"],
+  "accommodation": "hotel",
+  "groupSize": 2,
+  "specialRequests": "优先品尝当地特色美食，晚间活动安排"
+}
+```
+
+成功响应断言：
+- HTTP 201/200
+- data.sessionId: string（非空）
+- data.destination: "哈尔滨"
+- data.status in ["pending", "processing", "completed"]
+- timestamp: ISO 8601 字符串
+
+> 长春/沈阳：将 destination 分别换为“长春”/“沈阳”，其余参数一致。
+
+#### 9.2.2 启动规划（适用于三城）
+```http
+POST /api/v1/planning/sessions/{sessionId}/start
+Authorization: Bearer {token}
+```
+成功响应断言：
+- HTTP 200
+- data.sessionId: string（与上一步一致）
+- data.status: "processing"
+- data.estimatedTime: number（秒）
+- data.message: string
+
+### 9.3 预期响应断言（规划完成后获取详情）
+```http
+GET /api/v1/planning/sessions/{sessionId}
+Authorization: Bearer {token}
+```
+成功响应断言：
+- HTTP 200
+- data.destination: in ["哈尔滨", "长春", "沈阳"]
+- data.result.budget: object（包含 total:number 与 breakdown:object）
+- data.result.itinerary: array（长度>0）
+  - 每日项包含：day:number, location:string, activities:string[]
+- 住宿推荐：data.result.accommodation 或 itinerary 中包含住宿字段
+- 交通优化：行程中存在跨点移动且附带方式/时长信息
+
+### 9.4 故障转移验证
+
+> 以下步骤用于验证 LLM 双链路（DeepSeek→SiliconFlow）与 地图MCP 双链路（高德→腾讯）的自动切换与回切。请在测试环境执行。
+
+1) LLM 故障转移（DeepSeek → SiliconFlow）
+- 暂时置错 DEEPSEEK_API_KEY 或模拟 DeepSeek 不可用
+- 重复 9.2 的创建与启动流程（建议目的地：哈尔滨）
+- 通过以下方式验证：
+  - 调用只读端点 GET /api/health/failover，期望 llm.activeProvider = "siliconflow"（若已启用）
+  - 服务器日志应记录 provider=siliconflow
+  - 业务响应仍满足 9.3 的断言（可允许数据为降级结果）
+- 恢复正确 DEEPSEEK_API_KEY 后再次发起流程，应自动回切为 deepseek
+
+2) 地图故障转移（AMap → Tencent）
+- MCP_AMAP_ENABLED=true, MCP_TENCENT_ENABLED=true
+- 模拟 AMap MCP 不可用（例如关闭权限/服务）
+- 以“长春”或“沈阳”为目的地重复 9.2 流程
+- 验证方式：
+  - GET /api/health/failover 期望 map.activeProvider = "tencent"（若已启用）
+  - 服务器日志应记录 provider=tencent
+  - 规划结果中 POI/路线仍可用（允许智能降级）
+- 恢复 AMap 后再次发起流程，应回切为 amap
+
+3) MCP 工具调用约束
+- 所有地图数据获取必须通过 LLM function calling 执行 MCP 工具（如 maps_text_search_amap-maps / maps_text_search_tencent-maps 等），禁止在应用层直连地图 API。
+- 若工具不可用，应返回结构化空结果并由上层触发智能降级，不得抛出未处理异常。
+
     base_url='https://api.smart-travel.ai',
     api_key='your-api-key'
 )
