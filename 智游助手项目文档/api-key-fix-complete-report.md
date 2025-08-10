@@ -41,9 +41,9 @@ AMAP_MCP_API_KEY=your-amap-api-key-here
 SILICONFLOW_API_KEY=your-siliconflow-api-key-here
 
 # 修复后 (.env.local)
-DEEPSEEK_API_KEY=sk-f846077d3a3f4f4ab98ecabf09ba7148
-AMAP_MCP_API_KEY=122e7e01e2b31768d91052d296e57c20
-SILICONFLOW_API_KEY=sk-nqbmccbvfuqzzefxeprzjssgxnpxywqaxpxhvongkdhivzet
+DEEPSEEK_API_KEY=your-deepseek-api-key-here
+AMAP_MCP_API_KEY=your-amap-api-key-here
+SILICONFLOW_API_KEY=your-siliconflow-api-key-here
 ```
 
 ### 2. 重启开发服务器 ✅
