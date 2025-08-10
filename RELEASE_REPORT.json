@@ -1,0 +1,56 @@
+{
+  "version": "6.5.0",
+  "releaseDate": "2025-08-10T00:54:19.394Z",
+  "steps": [
+    {
+      "step": "代码准备和验证",
+      "status": "SUCCESS",
+      "description": "验证Timeline解析架构v2.0集成和代码质量"
+    },
+    {
+      "step": "版本标记",
+      "status": "SUCCESS",
+      "description": "添加版本信息和构建时间戳"
+    },
+    {
+      "step": "代码脱敏",
+      "status": "SUCCESS",
+      "description": "移除敏感信息，准备开源发布"
+    },
+    {
+      "step": "发布包准备",
+      "status": "SUCCESS",
+      "description": "创建完整的发布包和安装脚本"
+    },
+    {
+      "step": "Git标签创建",
+      "status": "SUCCESS",
+      "description": "创建Git标签和发布说明"
+    },
+    {
+      "step": "GitHub仓库初始化",
+      "status": "FAILED",
+      "description": "创建GitHub仓库并推送代码"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "successful": 5,
+    "failed": 1,
+    "overallStatus": "FAILED"
+  },
+  "features": [
+    "Timeline解析架构v2.0",
+    "Feature Flag支持",
+    "双LLM服务容错",
+    "双地图服务容错",
+    "服务端解析优先",
+    "高性能优化"
+  ],
+  "nextSteps": [
+    "验证GitHub Release页面",
+    "测试下载和安装",
+    "分享给团队和社区",
+    "收集用户反馈"
+  ]
+}

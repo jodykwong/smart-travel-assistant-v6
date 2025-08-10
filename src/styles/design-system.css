@@ -1,0 +1,286 @@
+/**
+ * 智游助手v6.5 设计系统
+ * 基于Apple HIG和Material Design规范
+ */
+
+/* ========================================
+   设计令牌 (Design Tokens)
+   ======================================== */
+
+:root {
+  /* === 颜色系统 === */
+  /* Material Design 3 Primary Colors */
+  --md-sys-color-primary: #1976D2;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #D3E3FD;
+  --md-sys-color-on-primary-container: #001C38;
+  
+  /* Material Design 3 Secondary Colors */
+  --md-sys-color-secondary: #DC004E;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #FFD9E2;
+  --md-sys-color-on-secondary-container: #3E0014;
+  
+  /* Surface Colors */
+  --md-sys-color-surface: #FFFFFF;
+  --md-sys-color-on-surface: #1C1B1F;
+  --md-sys-color-surface-variant: #F4F4F4;
+  --md-sys-color-on-surface-variant: #49454F;
+  
+  /* Background Colors */
+  --md-sys-color-background: #FEFBFF;
+  --md-sys-color-on-background: #1C1B1F;
+  
+  /* Error Colors */
+  --md-sys-color-error: #BA1A1A;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #FFDAD6;
+  --md-sys-color-on-error-container: #410002;
+  
+  /* === 字体系统 === */
+  /* Apple HIG Typography Scale */
+  --ios-font-large-title: 34px;
+  --ios-font-title-1: 28px;
+  --ios-font-title-2: 22px;
+  --ios-font-title-3: 20px;
+  --ios-font-headline: 17px;
+  --ios-font-body: 17px;
+  --ios-font-callout: 16px;
+  --ios-font-subhead: 15px;
+  --ios-font-footnote: 13px;
+  --ios-font-caption-1: 12px;
+  --ios-font-caption-2: 11px;
+  
+  /* Material Design Typography Scale */
+  --md-sys-typescale-display-large: 57px;
+  --md-sys-typescale-display-medium: 45px;
+  --md-sys-typescale-display-small: 36px;
+  --md-sys-typescale-headline-large: 32px;
+  --md-sys-typescale-headline-medium: 28px;
+  --md-sys-typescale-headline-small: 24px;
+  --md-sys-typescale-title-large: 22px;
+  --md-sys-typescale-title-medium: 16px;
+  --md-sys-typescale-title-small: 14px;
+  --md-sys-typescale-body-large: 16px;
+  --md-sys-typescale-body-medium: 14px;
+  --md-sys-typescale-body-small: 12px;
+  --md-sys-typescale-label-large: 14px;
+  --md-sys-typescale-label-medium: 12px;
+  --md-sys-typescale-label-small: 11px;
+  
+  /* === 间距系统 === */
+  /* 8pt Grid System (Apple HIG) */
+  --spacing-xs: 4px;   /* 0.5 units */
+  --spacing-sm: 8px;   /* 1 unit */
+  --spacing-md: 16px;  /* 2 units */
+  --spacing-lg: 24px;  /* 3 units */
+  --spacing-xl: 32px;  /* 4 units */
+  --spacing-2xl: 48px; /* 6 units */
+  --spacing-3xl: 64px; /* 8 units */
+  
+  /* === 圆角系统 === */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* === 阴影系统 (Material Design Elevation) === */
+  --elevation-0: none;
+  --elevation-1: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --elevation-2: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --elevation-3: 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+  --elevation-4: 0px 2px 3px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
+  --elevation-5: 0px 4px 4px rgba(0, 0, 0, 0.3), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
+  
+  /* === 最小触控目标 === */
+  --min-touch-target: 44px; /* Apple HIG: 44pt minimum */
+  --md-min-touch-target: 48px; /* Material Design: 48dp minimum */
+  
+  /* === 动画时长 === */
+  --duration-short: 100ms;
+  --duration-medium: 200ms;
+  --duration-long: 300ms;
+  --duration-extra-long: 500ms;
+  
+  /* === 缓动函数 === */
+  --easing-standard: cubic-bezier(0.2, 0.0, 0, 1.0);
+  --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --easing-accelerate: cubic-bezier(0.4, 0.0, 1.0, 1.0);
+}
+
+/* ========================================
+   深色模式支持
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode Colors */
+    --md-sys-color-primary: #A8C7FA;
+    --md-sys-color-on-primary: #002E69;
+    --md-sys-color-primary-container: #004494;
+    --md-sys-color-on-primary-container: #D3E3FD;
+    
+    --md-sys-color-secondary: #FFB1C8;
+    --md-sys-color-on-secondary: #5E1129;
+    --md-sys-color-secondary-container: #7D2C3E;
+    --md-sys-color-on-secondary-container: #FFD9E2;
+    
+    --md-sys-color-surface: #121212;
+    --md-sys-color-on-surface: #E6E1E5;
+    --md-sys-color-surface-variant: #2B2B2B;
+    --md-sys-color-on-surface-variant: #CAC4D0;
+    
+    --md-sys-color-background: #0F0F0F;
+    --md-sys-color-on-background: #E6E1E5;
+    
+    --md-sys-color-error: #FFB4AB;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000A;
+    --md-sys-color-on-error-container: #FFDAD6;
+  }
+}
+
+/* ========================================
+   高对比度模式支持
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --md-sys-color-primary: #0052CC;
+    --md-sys-color-secondary: #B8004A;
+    --md-sys-color-error: #A80000;
+  }
+}
+
+/* ========================================
+   减少动画偏好支持
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-short: 0ms;
+    --duration-medium: 0ms;
+    --duration-long: 0ms;
+    --duration-extra-long: 0ms;
+  }
+}
+
+/* ========================================
+   基础组件样式
+   ======================================== */
+
+/* Apple HIG Button Styles */
+.btn-ios-primary {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  min-height: var(--min-touch-target);
+  font-size: var(--ios-font-body);
+  font-weight: 600;
+  transition: all var(--duration-medium) var(--easing-standard);
+  cursor: pointer;
+}
+
+.btn-ios-primary:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.btn-ios-primary:active {
+  transform: translateY(0);
+  opacity: 0.6;
+}
+
+/* Material Design Button Styles */
+.btn-md-filled {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 10px 24px;
+  min-height: 40px;
+  min-width: 64px;
+  font-size: var(--md-sys-typescale-label-large);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1px;
+  transition: all var(--duration-medium) var(--easing-standard);
+  cursor: pointer;
+  box-shadow: var(--elevation-1);
+}
+
+.btn-md-filled:hover {
+  box-shadow: var(--elevation-2);
+}
+
+.btn-md-filled:active {
+  box-shadow: var(--elevation-1);
+}
+
+/* Material Design Card */
+.card-md {
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--elevation-1);
+  transition: box-shadow var(--duration-medium) var(--easing-standard);
+}
+
+.card-md:hover {
+  box-shadow: var(--elevation-2);
+}
+
+/* Apple HIG Card */
+.card-ios {
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all var(--duration-medium) var(--easing-standard);
+}
+
+.card-ios:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-2);
+}
+
+/* Input Fields */
+.input-md-outlined {
+  border: 1px solid var(--md-sys-color-on-surface-variant);
+  border-radius: var(--radius-xs);
+  padding: 16px;
+  font-size: var(--md-sys-typescale-body-large);
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface);
+  transition: border-color var(--duration-medium) var(--easing-standard);
+  min-height: 56px;
+}
+
+.input-md-outlined:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+}
+
+.input-ios {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: var(--ios-font-body);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  transition: all var(--duration-medium) var(--easing-standard);
+  min-height: var(--min-touch-target);
+}
+
+.input-ios:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}

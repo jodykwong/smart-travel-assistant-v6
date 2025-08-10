@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行规划结果 - 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#007AFF',
+                        'brand-secondary': '#5856D6',
+                        'surface': '#FFFFFF',
+                        'surface-variant': '#F2F2F7',
+                        'on-surface': '#1C1C1E',
+                        'on-surface-variant': '#8E8E93',
+                        'outline': '#C6C6C8',
+                        'success': '#34C759',
+                        'warning': '#FF9500',
+                        'error': '#FF3B30'
+                    },
+                    spacing: {
+                        '4': '16px',
+                        '8': '32px',
+                        '12': '48px',
+                        '16': '64px',
+                        '20': '80px',
+                        '24': '96px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .timeline-line {
+            background: linear-gradient(to bottom, #007AFF 0%, #5856D6 100%);
+        }
+        .timeline-dot {
+            box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 8px #007AFF20;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-surface via-surface-variant to-surface min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-surface/80 backdrop-blur-xl border-b border-outline/50 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-outline/50 text-on-surface hover:bg-surface-variant/50 transition-all duration-300">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>返回</span>
+                    </button>
+                    <div>
+                        <h1 id="planTitle" class="text-2xl font-bold text-on-surface">加载中...</h1>
+                        <p id="planSubtitle" class="text-sm text-on-surface-variant">正在获取行程信息</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="p-3 rounded-xl hover:bg-surface-variant/50 transition-all duration-300" title="分享行程">
+                        <i class="fas fa-share-alt text-on-surface-variant"></i>
+                    </button>
+                    <button class="p-3 rounded-xl hover:bg-surface-variant/50 transition-all duration-300" title="收藏行程">
+                        <i class="fas fa-heart text-on-surface-variant"></i>
+                    </button>
+                    <button class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-primary to-brand-secondary text-white rounded-xl hover:shadow-lg transition-all duration-300">
+                        <i class="fas fa-download"></i>
+                        <span>导出行程</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 加载状态 -->
+        <div id="loadingState" class="flex items-center justify-center py-20">
+            <div class="bg-surface/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center border border-outline/20">
+                <div class="animate-spin rounded-full h-16 w-16 border-4 border-brand-primary/20 border-t-brand-primary mx-auto mb-6"></div>
+                <h3 class="text-xl font-semibold text-on-surface mb-2">正在加载您的专属行程</h3>
+                <p class="text-on-surface-variant">请稍候，我们正在为您准备精彩的旅程...</p>
+            </div>
+        </div>
+
+        <!-- 错误状态 -->
+        <div id="errorState" class="hidden flex items-center justify-center py-20">
+            <div class="bg-surface/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center max-w-md border border-outline/20">
+                <div class="text-error mb-4">
+                    <i class="fas fa-exclamation-triangle text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-on-surface mb-2">加载失败</h3>
+                <p id="errorMessage" class="text-on-surface-variant mb-6">无法加载行程数据</p>
+                <button onclick="retryLoad()" class="px-6 py-3 bg-gradient-to-r from-brand-primary to-brand-secondary text-white rounded-xl hover:shadow-lg transition-all duration-300">
+                    重新加载
+                </button>
+            </div>
+        </div>
+
+        <!-- 主要内容 -->
+        <div id="mainContent" class="hidden">
+            <!-- 行程概览 -->
+            <div class="bg-gradient-to-r from-brand-primary/10 to-brand-secondary/10 rounded-3xl p-8 mb-8 border border-outline/20">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-brand-primary mb-1" id="totalDays">-</div>
+                        <div class="text-sm text-on-surface-variant">总天数</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-brand-secondary mb-1" id="totalCost">¥-</div>
+                        <div class="text-sm text-on-surface-variant">预算费用</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-success mb-1" id="groupSize">-</div>
+                        <div class="text-sm text-on-surface-variant">出行人数</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-warning mb-1" id="activitiesCount">-</div>
+                        <div class="text-sm text-on-surface-variant">精选活动</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间轴行程 -->
+            <div class="relative">
+                <!-- 时间轴线 -->
+                <div class="absolute left-8 top-0 bottom-0 w-1 timeline-line rounded-full"></div>
+                
+                <!-- 行程列表 -->
+                <div id="timelineList" class="space-y-8">
+                    <!-- 动态生成的时间轴项目将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let sessionId = null;
+        let planData = null;
+        let demoMode = false;
+
+        // 演示数据 - 杭州主题
+        const demoData = {
+            id: 'demo_session_002',
+            title: '杭州4日诗意之旅',
+            destination: '杭州',
+            totalDays: 4,
+            startDate: '2025-08-20',
+            endDate: '2025-08-23',
+            totalCost: 2280,
+            groupSize: 3,
+            itinerary: [
+                {
+                    day: 1,
+                    date: '8月20日 周二',
+                    location: '西湖景区',
+                    weather: '晴朗',
+                    temperature: '29°C',
+                    activities: [
+                        {
+                            time: '08:30-11:30',
+                            title: '西湖十景游览',
+                            description: '漫步苏堤春晓，欣赏断桥残雪。乘坐游船游览三潭印月，感受"淡妆浓抹总相宜"的西湖美景。最佳拍照时间为上午9-10点。',
+                            icon: '🌊',
+                            cost: 55,
+                            duration: '约3小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:00-17:00',
+                            title: '灵隐寺祈福',
+                            description: '参访千年古刹灵隐寺，观赏飞来峰石窟造像。在大雄宝殿虔诚祈福，感受佛教文化的深厚底蕴。建议穿着得体，保持安静。',
+                            icon: '🏛️',
+                            cost: 75,
+                            duration: '约3小时',
+                            period: '下午'
+                        },
+                        {
+                            time: '18:30-21:00',
+                            title: '河坊街夜市',
+                            description: '品尝杭州特色小吃：西湖醋鱼、东坡肉、龙井虾仁。购买丝绸、茶叶等特产，体验杭州的市井文化和夜生活。',
+                            icon: '🏮',
+                            cost: 180,
+                            duration: '约2.5小时',
+                            period: '晚上'
+                        }
+                    ]
+                },
+                {
+                    day: 2,
+                    date: '8月21日 周三',
+                    location: '西溪湿地',
+                    weather: '多云',
+                    temperature: '27°C',
+                    activities: [
+                        {
+                            time: '09:00-12:00',
+                            title: '西溪湿地探秘',
+                            description: '乘坐摇橹船深入湿地腹地，观赏原生态的自然风光。这里是《非诚勿扰》的拍摄地，生态环境优美，鸟类资源丰富。',
+                            icon: '🦆',
+                            cost: 80,
+                            duration: '约3小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:30-17:30',
+                            title: '中国茶叶博物馆',
+                            description: '了解中国茶文化的发展历程，品尝正宗龙井茶。参与茶艺表演，学习茶道礼仪，感受"茶为国饮"的文化内涵。',
+                            icon: '🍵',
+                            cost: 0,
+                            duration: '约3小时',
+                            period: '下午'
+                        }
+                    ]
+                },
+                {
+                    day: 3,
+                    date: '8月22日 周四',
+                    location: '千岛湖',
+                    weather: '晴朗',
+                    temperature: '31°C',
+                    activities: [
+                        {
+                            time: '07:00-18:00',
+                            title: '千岛湖一日游',
+                            description: '乘坐游轮游览千岛湖，登上梅峰岛俯瞰群岛美景。参观龙山岛，了解当地的历史文化。湖水清澈，空气清新，是天然的氧吧。',
+                            icon: '⛵',
+                            cost: 298,
+                            duration: '全天',
+                            period: '全天'
+                        }
+                    ]
+                },
+                {
+                    day: 4,
+                    date: '8月23日 周五',
+                    location: '杭州市区',
+                    weather: '晴朗',
+                    temperature: '30°C',
+                    activities: [
+                        {
+                            time: '09:30-12:00',
+                            title: '宋城主题公园',
+                            description: '体验宋代文化，观看《宋城千古情》大型演出。园内有各种宋代建筑和民俗表演，让您穿越回到繁华的宋朝时代。',
+                            icon: '🎭',
+                            cost: 320,
+                            duration: '约2.5小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:00-16:30',
+                            title: '杭州丝绸博物馆',
+                            description: '了解中国丝绸的历史和制作工艺，欣赏精美的丝绸制品。这里是中国第一座丝绸专业博物馆，展品丰富，工艺精湛。',
+                            icon: '🧵',
+                            cost: 0,
+                            duration: '约2.5小时',
+                            period: '下午'
+                        }
+                    ]
+                }
+            ],
+            createdAt: new Date().toISOString()
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('sessionId');
+
+            if (!sessionId) {
+                console.log('🎭 进入演示模式');
+                demoMode = true;
+                loadDemoData();
+            } else {
+                loadTravelPlan();
+            }
+        });
+
+        // 加载演示数据
+        function loadDemoData() {
+            console.log('🎭 加载演示数据');
+            planData = demoData;
+
+            setTimeout(() => {
+                renderTravelPlan();
+            }, 1800);
+        }
+
+        // 加载旅行计划数据
+        async function loadTravelPlan() {
+            try {
+                console.log('📋 获取旅行计划结果:', sessionId);
+
+                const response = await fetch(`/api/v1/planning/sessions/${sessionId}`);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error?.message || '获取数据失败');
+                }
+
+                if (result.success && result.data) {
+                    planData = {
+                        id: sessionId,
+                        title: `${result.data.destination}深度游`,
+                        destination: result.data.destination,
+                        totalDays: result.data.totalDays || 0,
+                        startDate: result.data.startDate || '',
+                        endDate: result.data.endDate || '',
+                        totalCost: calculateTotalCost(result.data.result?.itinerary || []),
+                        groupSize: result.data.userPreferences?.groupSize || 2,
+                        itinerary: result.data.result?.itinerary || [],
+                        createdAt: new Date().toISOString()
+                    };
+
+                    renderTravelPlan();
+                } else {
+                    throw new Error('无效的响应数据');
+                }
+            } catch (error) {
+                console.error('❌ 加载旅行计划失败:', error);
+                console.log('🎭 API调用失败，切换到演示模式');
+                demoMode = true;
+                loadDemoData();
+            }
+        }
+
+        // 计算总费用
+        function calculateTotalCost(itinerary) {
+            let total = 0;
+            itinerary.forEach(day => {
+                if (day.activities) {
+                    day.activities.forEach(activity => {
+                        total += activity.cost || 0;
+                    });
+                }
+            });
+            return total;
+        }
+
+        // 计算活动总数
+        function calculateActivitiesCount(itinerary) {
+            let count = 0;
+            itinerary.forEach(day => {
+                if (day.activities) {
+                    count += day.activities.length;
+                }
+            });
+            return count;
+        }
+
+        // 渲染旅行计划
+        function renderTravelPlan() {
+            // 更新标题
+            document.getElementById('planTitle').textContent = planData.title;
+            document.getElementById('planSubtitle').textContent =
+                `${planData.destination} · ${formatDateRange(planData.startDate, planData.endDate)}${demoMode ? ' (演示模式)' : ''}`;
+
+            // 更新概览数据
+            document.getElementById('totalDays').textContent = planData.totalDays;
+            document.getElementById('totalCost').textContent = `¥${planData.totalCost}`;
+            document.getElementById('groupSize').textContent = `${planData.groupSize}人`;
+            document.getElementById('activitiesCount').textContent = calculateActivitiesCount(planData.itinerary);
+
+            // 渲染时间轴
+            const timelineList = document.getElementById('timelineList');
+            timelineList.innerHTML = '';
+
+            if (planData.itinerary && planData.itinerary.length > 0) {
+                planData.itinerary.forEach((day, index) => {
+                    const timelineItem = createTimelineItem(day, index + 1);
+                    timelineList.appendChild(timelineItem);
+                });
+            } else {
+                timelineList.innerHTML = `
+                    <div class="ml-20 bg-surface/80 backdrop-blur-xl rounded-3xl p-8 shadow-lg text-center border border-outline/20">
+                        <div class="text-on-surface-variant mb-4">
+                            <i class="fas fa-calendar-day text-5xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-on-surface mb-2">行程详情生成中</h3>
+                        <p class="text-on-surface-variant">正在为您生成详细的每日行程安排...</p>
+                    </div>
+                `;
+            }
+
+            // 显示主要内容
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+        }
+
+        // 创建时间轴项目
+        function createTimelineItem(dayData, dayNumber) {
+            const item = document.createElement('div');
+            item.className = 'relative pl-20';
+            
+            item.innerHTML = `
+                <!-- 时间轴点 -->
+                <div class="absolute left-6 w-4 h-4 bg-brand-primary rounded-full timeline-dot"></div>
+                
+                <!-- 日程卡片 -->
+                <div class="bg-surface/80 backdrop-blur-xl rounded-3xl shadow-lg overflow-hidden border border-outline/20 hover:shadow-xl transition-all duration-300">
+                    <div class="bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 p-6 border-b border-outline/10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-2xl font-bold text-on-surface mb-1">第 ${dayNumber} 天</h3>
+                                <p class="text-on-surface-variant">${dayData.date || formatDate(dayNumber)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-on-surface-variant flex items-center gap-2">
+                                    <i class="fas fa-map-marker-alt text-brand-primary"></i>
+                                    ${dayData.location || planData.destination}
+                                </p>
+                                <p class="text-on-surface-variant flex items-center gap-2 mt-1">
+                                    <i class="fas fa-thermometer-half text-brand-secondary"></i>
+                                    ${dayData.weather || '晴朗'} ${dayData.temperature || '25°C'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="space-y-6">
+                            ${(dayData.activities || []).map((activity, actIndex) => `
+                                <div class="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-r from-surface-variant/30 to-transparent hover:from-surface-variant/50 transition-all duration-300">
+                                    <div class="text-3xl">${activity.icon || '📍'}</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm font-medium">
+                                                ${activity.time || '全天'}
+                                            </span>
+                                            <span class="text-sm text-on-surface-variant">${activity.period || ''}</span>
+                                        </div>
+                                        <h4 class="text-lg font-semibold text-on-surface mb-2">${activity.title}</h4>
+                                        <p class="text-on-surface-variant mb-3 leading-relaxed">${activity.description}</p>
+                                        <div class="flex items-center gap-6 text-sm text-on-surface-variant">
+                                            <span class="flex items-center gap-1">
+                                                <i class="fas fa-clock text-brand-primary"></i>
+                                                ${activity.duration || '约2小时'}
+                                            </span>
+                                            ${activity.cost ? `
+                                                <span class="flex items-center gap-1">
+                                                    <i class="fas fa-yen-sign text-success"></i>
+                                                    ¥${activity.cost}
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return item;
+        }
+
+        // 格式化日期
+        function formatDate(dayNumber) {
+            if (!planData.startDate) return `第${dayNumber}天`;
+            
+            const startDate = new Date(planData.startDate);
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + dayNumber - 1);
+            
+            return currentDate.toLocaleDateString('zh-CN', { 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            });
+        }
+
+        // 格式化日期范围
+        function formatDateRange(startDate, endDate) {
+            if (!startDate || !endDate) return '';
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            return `${start.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}`;
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        // 重试加载
+        function retryLoad() {
+            document.getElementById('errorState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            loadTravelPlan();
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/planning';
+            }
+        }
+    </script>
+</body>
+</html>

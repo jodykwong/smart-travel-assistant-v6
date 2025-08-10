@@ -1,7 +1,7 @@
 {
   "name": "smart-travel-assistant-v6",
-  "version": "6.5.0",
-  "description": "Enterprise-grade AI travel planning system (v6.5) with LLM+Map dual-link failover (DeepSeek/SiliconFlow + AMap/Tencent MCP via LLM tools)",
+  "version": "6.51.0-preview",
+  "description": "Enterprise-grade AI travel planning system (v6.51-preview) with E2E testing framework, real API connections, and enhanced test stability",
   "private": true,
   "scripts": {
     "dev": "next dev",

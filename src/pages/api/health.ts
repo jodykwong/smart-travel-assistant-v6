@@ -72,12 +72,41 @@ export default async function handler(
       }
     }
 
-    // 2. API配置检查
+    // 2. API配置检查（检测占位符）
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    const amapKey = process.env.AMAP_MCP_API_KEY;
+    const siliconflowKey = process.env.SILICONFLOW_API_KEY;
+
     const apiServices = {
-      deepseek: process.env.DEEPSEEK_API_KEY ? 'configured' as const : 'not_configured' as const,
-      amap: process.env.AMAP_MCP_API_KEY ? 'configured' as const : 'not_configured' as const,
-      siliconflow: process.env.SILICONFLOW_API_KEY ? 'configured' as const : 'not_configured' as const
+      deepseek: (deepseekKey && deepseekKey !== 'sk-your-deepseek-api-key-here') ? 'configured' as const : 'not_configured' as const,
+      amap: (amapKey && amapKey !== 'your-amap-api-key-here') ? 'configured' as const : 'not_configured' as const,
+      siliconflow: (siliconflowKey && siliconflowKey !== 'your-siliconflow-api-key-here') ? 'configured' as const : 'not_configured' as const
     };
+
+    // 添加API密钥占位符检查
+    if (deepseekKey === 'sk-your-deepseek-api-key-here') {
+      checks.push({
+        name: 'DeepSeek API Key',
+        status: 'fail',
+        message: 'Using placeholder value - please configure real API key'
+      });
+    }
+
+    if (amapKey === 'your-amap-api-key-here') {
+      checks.push({
+        name: 'Amap API Key',
+        status: 'fail',
+        message: 'Using placeholder value - please configure real API key'
+      });
+    }
+
+    if (siliconflowKey === 'your-siliconflow-api-key-here') {
+      checks.push({
+        name: 'SiliconFlow API Key',
+        status: 'fail',
+        message: 'Using placeholder value - please configure real API key'
+      });
+    }
 
     // 3. 内存使用检查
     const memoryUsage = process.memoryUsage();

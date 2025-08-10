@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行规划结果 - 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#007AFF',
+                        'brand-secondary': '#5856D6',
+                        'surface': '#FFFFFF',
+                        'surface-variant': '#F2F2F7',
+                        'on-surface': '#1C1C1E',
+                        'on-surface-variant': '#8E8E93',
+                        'outline': '#C6C6C8',
+                        'success': '#34C759',
+                        'warning': '#FF9500',
+                        'error': '#FF3B30'
+                    },
+                    spacing: {
+                        '4': '16px',
+                        '8': '32px',
+                        '12': '48px',
+                        '16': '64px',
+                        '20': '80px',
+                        '24': '96px'
+                    },
+                    borderRadius: {
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px'
+                    },
+                    fontSize: {
+                        'display-large': ['36px', { lineHeight: '44px', fontWeight: '700' }],
+                        'headline-large': ['28px', { lineHeight: '36px', fontWeight: '600' }],
+                        'headline-medium': ['24px', { lineHeight: '32px', fontWeight: '600' }],
+                        'title-large': ['20px', { lineHeight: '28px', fontWeight: '500' }],
+                        'body-large': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+                        'body-medium': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+                        'label-large': ['14px', { lineHeight: '20px', fontWeight: '500' }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-variant min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-surface border-b border-outline sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline text-on-surface hover:bg-surface-variant transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>返回</span>
+                    </button>
+                    <div>
+                        <h1 id="planTitle" class="text-headline-medium text-on-surface">加载中...</h1>
+                        <p id="planSubtitle" class="text-body-medium text-on-surface-variant">正在获取行程信息</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="p-2 rounded-lg hover:bg-surface-variant transition-colors" title="分享行程">
+                        <i class="fas fa-share-alt text-on-surface-variant"></i>
+                    </button>
+                    <button class="p-2 rounded-lg hover:bg-surface-variant transition-colors" title="收藏行程">
+                        <i class="fas fa-heart text-on-surface-variant"></i>
+                    </button>
+                    <button class="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                        <i class="fas fa-download"></i>
+                        <span>导出行程</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- 加载状态 -->
+        <div id="loadingState" class="flex items-center justify-center py-20">
+            <div class="bg-surface rounded-2xl p-8 shadow-lg text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+                <h3 class="text-headline-medium text-on-surface mb-2">正在加载行程</h3>
+                <p class="text-body-medium text-on-surface-variant">请稍候...</p>
+            </div>
+        </div>
+
+        <!-- 错误状态 -->
+        <div id="errorState" class="hidden flex items-center justify-center py-20">
+            <div class="bg-surface rounded-2xl p-8 shadow-lg text-center max-w-md">
+                <div class="text-error mb-4">
+                    <i class="fas fa-exclamation-triangle text-4xl"></i>
+                </div>
+                <h3 class="text-headline-medium text-on-surface mb-2">加载失败</h3>
+                <p id="errorMessage" class="text-body-medium text-on-surface-variant mb-4">无法加载行程数据</p>
+                <button onclick="retryLoad()" class="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                    重试
+                </button>
+            </div>
+        </div>
+
+        <!-- 主要内容 -->
+        <div id="mainContent" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- 左侧行程列表 -->
+                <div class="lg:col-span-9">
+                    <div id="itineraryList" class="space-y-6">
+                        <!-- 动态生成的行程卡片将在这里显示 -->
+                    </div>
+                </div>
+
+                <!-- 右侧边栏 -->
+                <div class="lg:col-span-3">
+                    <div class="bg-surface rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-headline-medium text-on-surface mb-4">旅行贴士</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-lightbulb text-warning mt-1"></i>
+                                <div>
+                                    <p class="text-label-large text-on-surface">最佳出行时间</p>
+                                    <p class="text-body-medium text-on-surface-variant">建议提前1-2周预订机票和酒店</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-umbrella text-brand-primary mt-1"></i>
+                                <div>
+                                    <p class="text-label-large text-on-surface">天气准备</p>
+                                    <p class="text-body-medium text-on-surface-variant">关注天气预报，准备合适的衣物</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-credit-card text-success mt-1"></i>
+                                <div>
+                                    <p class="text-label-large text-on-surface">支付方式</p>
+                                    <p class="text-body-medium text-on-surface-variant">建议携带现金和银行卡</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let sessionId = null;
+        let planData = null;
+        let demoMode = false;
+
+        // 演示数据
+        const demoData = {
+            id: 'demo_session_001',
+            title: '南京3日文化深度游',
+            destination: '南京',
+            totalDays: 3,
+            startDate: '2025-08-15',
+            endDate: '2025-08-17',
+            totalCost: 1580,
+            groupSize: 2,
+            itinerary: [
+                {
+                    day: 1,
+                    date: '8月15日 周四',
+                    location: '南京市中心',
+                    weather: '晴朗',
+                    temperature: '28°C',
+                    activities: [
+                        {
+                            time: '09:00-12:00',
+                            title: '中山陵景区游览',
+                            description: '参观中山陵，感受民国历史文化。登上392级台阶，俯瞰南京城景。建议穿舒适的运动鞋，带好防晒用品。',
+                            icon: '🏛️',
+                            cost: 0,
+                            duration: '约3小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:00-17:00',
+                            title: '明孝陵探秘',
+                            description: '探访明朝开国皇帝朱元璋的陵墓，漫步神道，欣赏古代建筑艺术。世界文化遗产，历史价值极高。',
+                            icon: '👑',
+                            cost: 70,
+                            duration: '约3小时',
+                            period: '下午'
+                        },
+                        {
+                            time: '18:00-20:00',
+                            title: '夫子庙美食街',
+                            description: '品尝南京特色小吃：鸭血粉丝汤、小笼包、桂花糖芋苗。感受秦淮河畔的夜景和历史文化氛围。',
+                            icon: '🍜',
+                            cost: 120,
+                            duration: '约2小时',
+                            period: '晚上'
+                        }
+                    ]
+                },
+                {
+                    day: 2,
+                    date: '8月16日 周五',
+                    location: '南京老城区',
+                    weather: '多云',
+                    temperature: '26°C',
+                    activities: [
+                        {
+                            time: '09:00-12:00',
+                            title: '南京博物院',
+                            description: '中国三大博物馆之一，馆藏丰富。重点参观历史馆和艺术馆，了解江苏地区的历史文化发展脉络。',
+                            icon: '🏛️',
+                            cost: 0,
+                            duration: '约3小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:00-16:30',
+                            title: '总统府历史建筑群',
+                            description: '参观中国近代史遗址博物馆，了解太平天国和中华民国的历史。建筑风格独特，历史价值重大。',
+                            icon: '🏢',
+                            cost: 40,
+                            duration: '约2.5小时',
+                            period: '下午'
+                        },
+                        {
+                            time: '17:00-19:00',
+                            title: '玄武湖公园',
+                            description: '南京最大的城内公园，湖光山色美不胜收。可以租船游湖，或在湖边漫步，享受宁静的黄昏时光。',
+                            icon: '🌊',
+                            cost: 0,
+                            duration: '约2小时',
+                            period: '傍晚'
+                        }
+                    ]
+                },
+                {
+                    day: 3,
+                    date: '8月17日 周六',
+                    location: '南京新街口',
+                    weather: '晴朗',
+                    temperature: '30°C',
+                    activities: [
+                        {
+                            time: '09:00-11:30',
+                            title: '雨花台烈士陵园',
+                            description: '缅怀革命先烈，了解中国近现代革命历史。园内绿树成荫，环境庄严肃穆，是进行爱国主义教育的重要场所。',
+                            icon: '🌹',
+                            cost: 0,
+                            duration: '约2.5小时',
+                            period: '上午'
+                        },
+                        {
+                            time: '14:00-17:00',
+                            title: '新街口商圈购物',
+                            description: '南京最繁华的商业中心，购买特产和纪念品。推荐购买：南京云锦、雨花茶、盐水鸭等特色产品。',
+                            icon: '🛍️',
+                            cost: 350,
+                            duration: '约3小时',
+                            period: '下午'
+                        }
+                    ]
+                }
+            ],
+            createdAt: new Date().toISOString()
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从URL获取sessionId
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('sessionId');
+
+            if (!sessionId) {
+                // 没有sessionId，进入演示模式
+                console.log('🎭 进入演示模式');
+                demoMode = true;
+                loadDemoData();
+            } else {
+                // 有sessionId，尝试加载真实数据
+                loadTravelPlan();
+            }
+        });
+
+        // 加载演示数据
+        function loadDemoData() {
+            console.log('🎭 加载演示数据');
+            planData = demoData;
+
+            // 模拟加载延迟，展示加载动画
+            setTimeout(() => {
+                renderTravelPlan();
+            }, 1500);
+        }
+
+        // 加载旅行计划数据
+        async function loadTravelPlan() {
+            try {
+                console.log('📋 获取旅行计划结果:', sessionId);
+
+                const response = await fetch(`/api/v1/planning/sessions/${sessionId}`);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error?.message || '获取数据失败');
+                }
+
+                if (result.success && result.data) {
+                    planData = {
+                        id: sessionId,
+                        title: `${result.data.destination}深度游`,
+                        destination: result.data.destination,
+                        totalDays: result.data.totalDays || 0,
+                        startDate: result.data.startDate || '',
+                        endDate: result.data.endDate || '',
+                        totalCost: calculateTotalCost(result.data.result?.itinerary || []),
+                        groupSize: result.data.userPreferences?.groupSize || 2,
+                        itinerary: result.data.result?.itinerary || [],
+                        createdAt: new Date().toISOString()
+                    };
+
+                    renderTravelPlan();
+                } else {
+                    throw new Error('无效的响应数据');
+                }
+            } catch (error) {
+                console.error('❌ 加载旅行计划失败:', error);
+                // 如果API调用失败，fallback到演示模式
+                console.log('🎭 API调用失败，切换到演示模式');
+                demoMode = true;
+                loadDemoData();
+            }
+        }
+
+        // 计算总费用
+        function calculateTotalCost(itinerary) {
+            let total = 0;
+            itinerary.forEach(day => {
+                if (day.activities) {
+                    day.activities.forEach(activity => {
+                        total += activity.cost || 0;
+                    });
+                }
+            });
+            return total;
+        }
+
+        // 渲染旅行计划
+        function renderTravelPlan() {
+            // 更新标题
+            document.getElementById('planTitle').textContent = planData.title;
+            document.getElementById('planSubtitle').textContent =
+                `${planData.destination} · ${planData.totalDays}天 · 预算 ¥${planData.totalCost}${demoMode ? ' (演示模式)' : ''}`;
+
+            // 渲染行程列表
+            const itineraryList = document.getElementById('itineraryList');
+            itineraryList.innerHTML = '';
+
+            if (planData.itinerary && planData.itinerary.length > 0) {
+                planData.itinerary.forEach((day, index) => {
+                    const dayCard = createDayCard(day, index + 1);
+                    itineraryList.appendChild(dayCard);
+                });
+            } else {
+                itineraryList.innerHTML = `
+                    <div class="bg-surface rounded-2xl p-8 shadow-lg text-center">
+                        <div class="text-on-surface-variant mb-4">
+                            <i class="fas fa-calendar-day text-4xl"></i>
+                        </div>
+                        <h3 class="text-headline-medium text-on-surface mb-2">行程详情生成中</h3>
+                        <p class="text-body-medium text-on-surface-variant">正在为您生成详细的每日行程安排...</p>
+                    </div>
+                `;
+            }
+
+            // 显示演示模式提示
+            if (demoMode) {
+                const demoNotice = document.createElement('div');
+                demoNotice.className = 'bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 text-center';
+                demoNotice.innerHTML = `
+                    <div class="flex items-center justify-center gap-2 text-blue-600">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="font-medium">演示模式</span>
+                    </div>
+                    <p class="text-sm text-blue-600 mt-1">这是设计演示数据，展示页面布局和交互效果</p>
+                `;
+                itineraryList.insertBefore(demoNotice, itineraryList.firstChild);
+            }
+
+            // 显示主要内容
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+        }
+
+        // 创建日程卡片
+        function createDayCard(dayData, dayNumber) {
+            const card = document.createElement('div');
+            card.className = 'bg-surface rounded-2xl shadow-lg overflow-hidden';
+            
+            card.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center text-label-large">
+                                ${dayNumber}
+                            </div>
+                            <div>
+                                <h3 class="text-title-large text-on-surface">Day ${dayNumber}</h3>
+                                <p class="text-body-medium text-on-surface-variant">${dayData.date || formatDate(dayNumber)}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-body-medium text-on-surface-variant">
+                                <i class="fas fa-map-marker-alt mr-1"></i>${dayData.location || planData.destination}
+                            </p>
+                            <p class="text-body-medium text-on-surface-variant">
+                                <i class="fas fa-thermometer-half mr-1"></i>${dayData.weather || '晴朗'} ${dayData.temperature || '25°C'}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        ${(dayData.activities || []).map(activity => `
+                            <div class="border-l-4 border-brand-primary pl-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-body-medium text-on-surface-variant">${activity.time || '全天'}</span>
+                                            <span class="text-body-medium text-brand-primary">${activity.period || ''}</span>
+                                        </div>
+                                        <h4 class="text-title-large text-on-surface mb-2">${activity.title}</h4>
+                                        <p class="text-body-medium text-on-surface-variant mb-2">${activity.description}</p>
+                                        <div class="flex items-center gap-4 text-body-medium text-on-surface-variant">
+                                            <span><i class="fas fa-clock mr-1"></i>${activity.duration || '约2小时'}</span>
+                                            ${activity.cost ? `<span><i class="fas fa-yen-sign mr-1"></i>¥${activity.cost}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl ml-4">${activity.icon || '📍'}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // 格式化日期
+        function formatDate(dayNumber) {
+            if (!planData.startDate) return `第${dayNumber}天`;
+            
+            const startDate = new Date(planData.startDate);
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + dayNumber - 1);
+            
+            return currentDate.toLocaleDateString('zh-CN', { 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            });
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        // 重试加载
+        function retryLoad() {
+            document.getElementById('errorState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            loadTravelPlan();
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/planning';
+            }
+        }
+    </script>
+</body>
+</html>

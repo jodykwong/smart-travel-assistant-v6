@@ -1,0 +1,13 @@
+{
+  "summary": {
+    "timestamp": "2025-08-10T09:40:23.764Z",
+    "totalApis": 3,
+    "connectedApis": 0,
+    "overallHealth": "poor"
+  },
+  "details": {},
+  "recommendations": [
+    "检查DeepSeek API密钥配置和网络连接",
+    "验证高德MCP API密钥有效性"
+  ]
+}

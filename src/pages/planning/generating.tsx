@@ -1,5 +1,6 @@
 /**
- * 智游助手v5.0 - 规划生成页面
+ * 智游助手v6.5 - 规划生成页面
+ * 基于Apple HIG和Material Design规范优化
  * Pages Router 兼容版本 - 实时监控LLM调用
  */
 
@@ -7,6 +8,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Progress, StepProgress } from '@/components/ui/Progress';
+import { Button, OutlineButton } from '@/components/ui/Button';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 
 // 阶段配置
 const PHASE_CONFIG = {
@@ -167,6 +171,27 @@ export default function GeneratingPage() {
               }, 1500);
             }
 
+            // 如果失败，跳转到错误恢复页面
+            if (newData.currentPhase === 'error' || newData.status === 'failed') {
+              const errorMessage = newData.errors?.length > 0
+                ? newData.errors[newData.errors.length - 1].message
+                : '规划生成失败，请检查API密钥配置或重试';
+
+              console.error('❌ 规划会话失败:', {
+                sessionId,
+                phase: newData.currentPhase,
+                status: newData.status,
+                error: errorMessage
+              });
+
+              // 延迟跳转到错误恢复页面
+              setTimeout(() => {
+                router.push(`/planning/error-recovery?sessionId=${sessionId}&error=${encodeURIComponent(errorMessage)}`);
+              }, 2000);
+
+              setError(errorMessage);
+            }
+
             return {
               ...prevState,
               ...newData,
@@ -191,12 +216,39 @@ export default function GeneratingPage() {
     // 自适应轮询间隔
     let pollInterval = 1000; // 初始1秒
     let consecutiveNoChange = 0;
+    let maxPollAttempts = 300; // 最大轮询次数（5分钟）
+    let currentPollAttempts = 0;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     const adaptivePoll = () => {
+      // 安全措施：检查最大轮询次数
+      if (currentPollAttempts >= maxPollAttempts) {
+        console.error('❌ 轮询超时，停止轮询');
+        setError('规划生成超时，请重试');
+        return;
+      }
+
+      currentPollAttempts++;
+
       pollSessionState().then(() => {
-        // 根据状态变化调整轮询频率
-        if (sessionState?.progress >= 100 || sessionState?.currentPhase === 'completed') {
-          return; // 完成后停止轮询
+        // 检查终止条件：完成、失败或错误状态
+        if (sessionState?.progress >= 100 ||
+            sessionState?.currentPhase === 'completed' ||
+            sessionState?.currentPhase === 'error' ||
+            sessionState?.status === 'failed') {
+
+          console.log('🛑 轮询停止条件满足:', {
+            progress: sessionState?.progress,
+            phase: sessionState?.currentPhase,
+            status: sessionState?.status
+          });
+
+          // 如果是错误状态，显示错误信息
+          if (sessionState?.currentPhase === 'error' || sessionState?.status === 'failed') {
+            setError('规划生成失败，请检查API密钥配置或重试');
+          }
+
+          return; // 停止轮询
         }
 
         consecutiveNoChange++;
@@ -208,14 +260,21 @@ export default function GeneratingPage() {
           pollInterval = Math.max(pollInterval * 0.9, 1000); // 最小1秒
         }
 
-        setTimeout(adaptivePoll, pollInterval);
+        timeoutId = setTimeout(adaptivePoll, pollInterval);
+      }).catch((error) => {
+        console.error('❌ 轮询过程中发生错误:', error);
+        setError(`轮询错误: ${error.message}`);
       });
     };
 
     // 开始自适应轮询
-    const initialTimeout = setTimeout(adaptivePoll, 1000);
+    timeoutId = setTimeout(adaptivePoll, 1000);
 
-    return () => clearTimeout(initialTimeout);
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [sessionId, startPlanning, pollSessionState]);
 
   // 切换趣味事实
@@ -245,12 +304,12 @@ export default function GeneratingPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">会话ID缺失</h1>
-          <button
+          <Button
             onClick={() => router.push('/planning')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            variant="primary"
           >
             返回规划页面
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -262,12 +321,12 @@ export default function GeneratingPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">规划生成失败</h1>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button
+          <Button
             onClick={() => router.push('/planning')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            variant="primary"
           >
             重新开始
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -376,13 +435,13 @@ export default function GeneratingPage() {
             )}
 
             {/* 取消按钮 */}
-            <button
+            <OutlineButton
               onClick={handleCancel}
               disabled={currentPhase === 'completed'}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+              variant="outline"
             >
               取消生成
-            </button>
+            </OutlineButton>
           </div>
 
           {/* 会话信息卡片 */}

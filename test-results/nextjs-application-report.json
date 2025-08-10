@@ -1,0 +1,26 @@
+{
+  "summary": {
+    "timestamp": "2025-08-10T09:37:12.559Z",
+    "overallHealth": "poor",
+    "pagesTestedSuccessfully": 0,
+    "totalPages": 2,
+    "apiEndpointsWorking": 0,
+    "totalApiEndpoints": 3,
+    "performanceScore": 100
+  },
+  "details": {
+    "pages": {},
+    "performance": {
+      "firstContentfulPaint": 0,
+      "largestContentfulPaint": 0,
+      "cumulativeLayoutShift": 0,
+      "firstInputDelay": 0,
+      "totalBlockingTime": 0,
+      "performanceScore": 100
+    }
+  },
+  "recommendations": [
+    "部分页面无法正常访问，请检查路由配置",
+    "部分API端点不可用，请检查后端服务"
+  ]
+}

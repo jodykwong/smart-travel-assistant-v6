@@ -1,5 +1,6 @@
 /**
- * 智游助手v5.0 - 规划页面
+ * 智游助手v6.5 - 规划页面
+ * 基于Apple HIG和Material Design规范优化
  * Pages Router 兼容版本
  */
 
@@ -12,6 +13,9 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import ErrorAlert from '@/components/ui/ErrorAlert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { PrimaryButton, OutlineButton } from '@/components/ui/Button';
+import { Input, DateInput } from '@/components/ui/Input';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 
 // 表单验证Schema（修复时间选择器逻辑缺陷）
 const travelPreferencesSchema = z.object({
@@ -90,7 +94,8 @@ export default function PlanningPage() {
     getValues,
   } = useForm<TravelPreferencesForm>({
     resolver: zodResolver(travelPreferencesSchema),
-    mode: 'onBlur', // 改为onBlur模式，避免过度验证
+    mode: 'onChange', // 修复：改为onChange模式，符合Material Design即时反馈原则
+    reValidateMode: 'onChange', // 添加：确保重新验证也是即时的
     defaultValues: {
       destination: '', // 添加默认值
       startDate: '',   // 添加默认值
@@ -430,7 +435,7 @@ export default function PlanningPage() {
   return (
     <>
       <Head>
-        <title>旅行规划 - 智游助手v5.0</title>
+        <title>旅行规划 - 智游助手v6.5</title>
         <meta name="description" content="创建您的个性化旅行规划" />
       </Head>
 
@@ -513,39 +518,35 @@ export default function PlanningPage() {
 
               {/* 导航按钮 */}
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                <button
+                <OutlineButton
                   type="button"
                   onClick={handlePrevious}
                   disabled={currentStep === 1}
-                  className={`px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors ${
-                    currentStep === 1 ? 'invisible' : ''
-                  }`}
+                  className={currentStep === 1 ? 'invisible' : ''}
                 >
                   上一步
-                </button>
+                </OutlineButton>
 
                 <div className="flex-1" />
 
                 {currentStep < STEPS.length ? (
-                  <button
+                  <PrimaryButton
                     type="button"
                     onClick={handleNext}
                     disabled={!isCurrentStepValid}
-                    className="px-6 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     下一步
-                  </button>
+                  </PrimaryButton>
                 ) : (
-                  <button
+                  <PrimaryButton
                     type="submit"
                     disabled={!isValid || isSubmitting}
-                    className="px-6 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                    loading={isSubmitting}
+                    icon={isSubmitting ? undefined : <i className="fas fa-magic"></i>}
+                    iconPosition="left"
                   >
-                    {isSubmitting && (
-                      <LoadingSpinner size="sm" color="white" />
-                    )}
-                    <span>{isSubmitting ? '正在创建...' : '开始生成规划'}</span>
-                  </button>
+                    {isSubmitting ? '正在创建...' : '开始生成规划'}
+                  </PrimaryButton>
                 )}
               </div>
             </form>

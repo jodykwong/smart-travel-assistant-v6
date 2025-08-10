@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-10T09:40:51.949Z",
+  "notebooks": {
+    "01_langgraph_architecture.ipynb": {
+      "success": true,
+      "executionTime": 53852,
+      "error": null,
+      "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_01_langgraph_architecture.ipynb",
+      "cellsExecuted": 18,
+      "warnings": []
+    }
+  }
+}

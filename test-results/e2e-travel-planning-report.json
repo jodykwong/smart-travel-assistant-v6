@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "timestamp": "2025-08-10T09:39:58.262Z",
+    "testType": "13天新疆旅游规划端到端测试",
+    "overallSuccess": false,
+    "userJourneySteps": 3,
+    "completedSteps": 0,
+    "totalDuration": 0,
+    "qualityScore": 0
+  },
+  "userJourney": {},
+  "planningResults": {},
+  "recommendations": [
+    "用户旅程存在中断，需要改善用户体验流程",
+    "规划质量需要提升，建议优化算法和数据源"
+  ],
+  "nextSteps": [
+    "修复发现的问题",
+    "重新进行端到端测试",
+    "优化用户体验流程"
+  ]
+}

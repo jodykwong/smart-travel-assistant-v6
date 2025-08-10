@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import '../styles/globals.css'
+import '../styles/design-system.css'
 
 // 创建React Query客户端
 const queryClient = new QueryClient({
