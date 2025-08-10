@@ -1,0 +1,25 @@
+{
+  "version": "6.5.0",
+  "releaseDate": "2025-08-10T00:54:13.577Z",
+  "features": [
+    "Timeline解析架构v2.0",
+    "LLM+Map双链路容错",
+    "高性能缓存策略",
+    "Feature Flag支持",
+    "完整监控和告警"
+  ],
+  "sanitized": true,
+  "sanitizedAt": "2025-08-10T00:54:13.579Z",
+  "sanitizedPatterns": [
+    "DeepSeek API密钥",
+    "SiliconFlow API密钥",
+    "高德地图API密钥",
+    "腾讯地图API密钥",
+    "数据库连接字符串",
+    "Redis连接字符串",
+    "JWT密钥",
+    "加密密钥",
+    "OpenAI格式API密钥",
+    "Bearer Token"
+  ]
+}

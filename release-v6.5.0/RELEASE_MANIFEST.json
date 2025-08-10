@@ -1,0 +1,59 @@
+{
+  "name": "智游助手",
+  "version": "6.5.0",
+  "codename": "Timeline解析架构v2.0",
+  "releaseDate": "2025-08-10T00:54:14.681Z",
+  "type": "preview",
+  "features": {
+    "core": [
+      "Timeline解析架构v2.0",
+      "可插拔解析器系统",
+      "Feature Flag支持",
+      "双LLM服务容错",
+      "双地图服务容错"
+    ],
+    "architecture": [
+      "服务端解析优先",
+      "前端组件架构优化",
+      "智能优先级选择",
+      "完整容错机制"
+    ],
+    "performance": [
+      "解析时间 <500ms",
+      "渲染时间 <200ms",
+      "解析成功率 >99%",
+      "数据完整性 100%"
+    ]
+  },
+  "requirements": {
+    "node": ">=18.17.0",
+    "npm": ">=9.0.0",
+    "memory": "4GB (推荐8GB)",
+    "storage": "20GB"
+  },
+  "apiKeys": {
+    "required": [
+      "DEEPSEEK_API_KEY",
+      "AMAP_API_KEY"
+    ],
+    "optional": [
+      "SILICONFLOW_API_KEY",
+      "TENCENT_MAP_API_KEY"
+    ]
+  },
+  "documentation": [
+    "README.md",
+    "QUICK_START.md",
+    "docs/timeline-architecture.md",
+    "docs/timeline-troubleshooting-sop.md",
+    "docs/API.md",
+    "docs/DEPLOYMENT.md"
+  ],
+  "scripts": [
+    "install.sh",
+    "install.bat",
+    "scripts/verify-timeline-v2.js",
+    "scripts/quick-verify.js"
+  ],
+  "checksum": "待生成"
+}

@@ -1,0 +1,24 @@
+{
+  "version": "6.5.0",
+  "buildTime": "2025-08-10T00:54:13.214Z",
+  "buildHash": "3ihnesu6",
+  "nodeVersion": "v22.16.0",
+  "platform": "darwin",
+  "arch": "x64",
+  "gitCommit": "N/A",
+  "gitBranch": "main",
+  "buildEnvironment": "development",
+  "features": [
+    "Timeline解析架构v2.0",
+    "LLM+Map双链路容错",
+    "Feature Flag支持",
+    "高性能缓存策略",
+    "完整监控告警"
+  ],
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.0.0"
+  }
+}

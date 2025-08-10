@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  smart-travel:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - TIMELINE_V2_ENABLED=true
+      - DEEPSEEK_API_KEY=your_deepseek_api_key_here
+      - SILICONFLOW_API_KEY=your_siliconflow_api_key_here
+      - AMAP_API_KEY=your_amap_api_key_here
+      - TENCENT_MAP_API_KEY=your_tencent_map_api_key_here
+      - REDIS_URL=redis://localhost:6379
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
