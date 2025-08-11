@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行程详情 - 智游助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'glass': 'rgba(255, 255, 255, 0.1)',
+                        'primary': '#6366f1',
+                        'secondary': '#8b5cf6',
+                        'accent': '#06b6d4',
+                        'success': '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-x-hidden">
+    <!-- iOS状态栏 -->
+    <div id="status-bar" class="fixed top-0 left-0 right-0 h-12 z-50"></div>
+
+    <!-- 主容器 -->
+    <div class="mobile-container mx-auto max-w-[375px] min-h-screen bg-white relative">
+        <!-- 导航栏 -->
+        <div class="fixed top-12 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-40">
+            <div class="flex items-center justify-between px-4 h-14">
+                <button class="w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-arrow-left text-gray-700"></i>
+                </button>
+                <h1 class="font-semibold text-gray-800">第1天详情</h1>
+                <button class="w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-share-alt text-gray-700"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="pt-26 pb-24 custom-scrollbar">
+            <!-- 日期标题 -->
+            <div class="px-4 py-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold">抵达乌鲁木齐</h2>
+                        <p class="text-indigo-100 mt-1">8月4日 周日</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold">¥280</div>
+                        <div class="text-indigo-100 text-sm">预算/人</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间线 -->
+            <div class="px-4 py-6">
+                <!-- 上午 -->
+                <div class="relative">
+                    <div class="flex items-start gap-4 mb-8">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                <span class="text-white text-lg">🌅</span>
+                            </div>
+                            <div class="w-1 h-20 bg-gradient-to-b from-yellow-400 to-orange-500 mt-2 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <div class="bg-white rounded-2xl card-shadow-2 p-4">
+                                <h3 class="font-bold text-gray-800 mb-2">上午 (09:00-12:00)</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-plane text-blue-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-800">机场接机</h4>
+                                            <p class="text-sm text-gray-600 mt-1">专车接机服务，直达酒店</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                                    <i class="fas fa-clock mr-1"></i>30分钟
+                                                </span>
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                    <i class="fas fa-dollar-sign mr-1"></i>免费
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-bed text-purple-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-800">酒店入住</h4>
+                                            <p class="text-sm text-gray-600 mt-1">乌鲁木齐希尔顿酒店</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                                    <i class="fas fa-star mr-1"></i>5星级
+                                                </span>
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                                                    <i class="fas fa-map-marker-alt mr-1"></i>市中心
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 下午 -->
+                <div class="relative">
+                    <div class="flex items-start gap-4 mb-8">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                <span class="text-white text-lg">☀️</span>
+                            </div>
+                            <div class="w-1 h-20 bg-gradient-to-b from-orange-400 to-red-500 mt-2 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <div class="bg-white rounded-2xl card-shadow-2 p-4">
+                                <h3 class="font-bold text-gray-800 mb-2">下午 (14:00-18:00)</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-mountain text-green-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-800">红山公园</h4>
+                                            <p class="text-sm text-gray-600 mt-1">乌鲁木齐标志性景点，俯瞰城市全景</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                    <i class="fas fa-clock mr-1"></i>2小时
+                                                </span>
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                                    <i class="fas fa-ticket-alt mr-1"></i>¥30
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-utensils text-red-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-800">新疆特色美食</h4>
+                                            <p class="text-sm text-gray-600 mt-1">品尝正宗大盘鸡、手抓饭</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                                                    <i class="fas fa-utensils mr-1"></i>午餐
+                                                </span>
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                                    <i class="fas fa-dollar-sign mr-1"></i>¥120
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 晚上 -->
+                <div class="relative">
+                    <div class="flex items-start gap-4">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                <span class="text-white text-lg">🌙</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <div class="bg-white rounded-2xl card-shadow-2 p-4">
+                                <h3 class="font-bold text-gray-800 mb-2">晚上 (19:00-21:00)</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-shopping-bag text-yellow-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-800">国际大巴扎夜市</h4>
+                                            <p class="text-sm text-gray-600 mt-1">体验浓郁的民族风情，购买特色纪念品</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                                    <i class="fas fa-clock mr-1"></i>2小时
+                                                </span>
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                    <i class="fas fa-gift mr-1"></i>购物
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 贴士卡片 -->
+            <div class="px-4 mb-6">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i class="fas fa-lightbulb text-yellow-500"></i>
+                        今日贴士
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check-circle text-green-500 mt-0.5 text-xs"></i>
+                            <span>新疆时差比北京时间晚2小时，注意调整作息</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check-circle text-green-500 mt-0.5 text-xs"></i>
+                            <span>紫外线较强，建议携带防晒用品</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check-circle text-green-500 mt-0.5 text-xs"></i>
+                            <span>当地气候干燥，多补充水分</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS底部导航栏 -->
+    <div id="tab-bar" class="fixed bottom-0 left-0 right-0 h-20 z-50"></div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

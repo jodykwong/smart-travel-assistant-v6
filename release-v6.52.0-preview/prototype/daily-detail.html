@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第3天详情 - 乌鲁木齐出发 | 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+            border-radius: 2px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -42px;
+            top: 30px;
+            width: 16px;
+            height: 16px;
+            background: #6366f1;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px #6366f1;
+        }
+        
+        .timeline-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .activity-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cost-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .time-badge {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .weather-card {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .day-navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 50px;
+            padding: 12px 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .floating-action:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(99, 102, 241, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="glass sticky top-0 z-50 p-4">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-white text-lg font-bold">第3天 - 乌鲁木齐出发</h1>
+                    <p class="text-white/70 text-sm">2025年9月 · 晴朗 25°C</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-bookmark"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="max-w-4xl mx-auto p-6">
+        <!-- 日期和天气信息 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="weather-card">
+                <i class="fas fa-sun text-3xl mb-2"></i>
+                <div class="text-lg font-bold">晴朗</div>
+                <div class="text-sm opacity-90">25°C</div>
+            </div>
+            <div class="glass rounded-2xl p-6 text-center text-white">
+                <i class="fas fa-map-marker-alt text-2xl mb-2 text-yellow-400"></i>
+                <div class="font-bold">新疆</div>
+                <div class="text-sm opacity-80">乌鲁木齐</div>
+            </div>
+            <div class="glass rounded-2xl p-6 text-center text-white">
+                <i class="fas fa-clock text-2xl mb-2 text-green-400"></i>
+                <div class="font-bold">4个活动</div>
+                <div class="text-sm opacity-80">总费用 ¥318</div>
+            </div>
+        </div>
+
+        <!-- 活动时间轴 -->
+        <div class="timeline">
+            <!-- 活动1: 抵达乌鲁木齐 -->
+            <div class="timeline-item">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="time-badge">09:00-12:00</div>
+                        <i class="fas fa-plane-arrival text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="cost-badge">¥86</div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">抵达乌鲁木齐</h3>
+                <p class="text-gray-600 mb-4">
+                    抵达乌鲁木齐，办理RV租赁手续（推荐租车公司：新疆神州房车租赁，需提前3个月预订）
+                </p>
+                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-clock mr-1"></i>约2-3小时</span>
+                    <span><i class="fas fa-car mr-1"></i>交通</span>
+                    <span><i class="fas fa-star mr-1"></i>重要</span>
+                </div>
+            </div>
+
+            <!-- 活动2: 采购物资 -->
+            <div class="timeline-item">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="time-badge">09:00-12:00</div>
+                        <i class="fas fa-shopping-cart text-green-600 text-xl"></i>
+                    </div>
+                    <div class="cost-badge">¥48</div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">采购物资</h3>
+                <p class="text-gray-600 mb-4">
+                    采购物资：便携煤气罐、馕、新疆干果、车载冰箱食材
+                </p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">便携煤气罐</span>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">馕</span>
+                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">新疆干果</span>
+                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">车载食材</span>
+                </div>
+                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-clock mr-1"></i>约2-3小时</span>
+                    <span><i class="fas fa-shopping-bag mr-1"></i>准备</span>
+                </div>
+            </div>
+
+            <!-- 活动3: 参观新疆博物馆 -->
+            <div class="timeline-item">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="time-badge">09:00-12:00</div>
+                        <i class="fas fa-university text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="cost-badge">¥64</div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">参观新疆博物馆</h3>
+                <p class="text-gray-600 mb-4">
+                    参观新疆博物馆（免费，需预约）看楼兰干尸
+                </p>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-amber-600 mr-2"></i>
+                        <span class="text-amber-800 text-sm font-medium">提醒：需要提前预约，免费参观</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-clock mr-1"></i>约2-3小时</span>
+                    <span><i class="fas fa-palette mr-1"></i>文化</span>
+                    <span><i class="fas fa-ticket-alt mr-1"></i>免费</span>
+                </div>
+            </div>
+
+            <!-- 活动4: 夜宿房车露营地 -->
+            <div class="timeline-item">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="time-badge">18:00-21:00</div>
+                        <i class="fas fa-bed text-indigo-600 text-xl"></i>
+                    </div>
+                    <div class="cost-badge">¥120</div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">乌鲁木齐国际房车露营地</h3>
+                <p class="text-gray-600 mb-4">
+                    夜宿：乌鲁木齐国际房车露营地（带电桩，120元/晚）
+                </p>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-plug text-green-600 mr-2"></i>
+                            <span class="text-green-800 text-sm">带电桩</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                            <span class="text-blue-800 text-sm">安全保障</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-clock mr-1"></i>约2-3小时</span>
+                    <span><i class="fas fa-home mr-1"></i>住宿</span>
+                    <span><i class="fas fa-star mr-1"></i>推荐</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当日总结 -->
+        <div class="glass rounded-2xl p-6 mt-8 text-white">
+            <h3 class="text-xl font-bold mb-4">
+                <i class="fas fa-clipboard-check text-green-400 mr-2"></i>
+                当日总结
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-400">4</div>
+                    <div class="text-sm opacity-80">完成活动</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-400">¥318</div>
+                    <div class="text-sm opacity-80">当日花费</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-400">9小时</div>
+                    <div class="text-sm opacity-80">活动时长</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动操作按钮 -->
+    <button class="floating-action" onclick="window.open('budget-breakdown.html', '_blank')">
+        <i class="fas fa-calculator"></i>
+    </button>
+
+    <!-- 底部导航 -->
+    <div class="day-navigation">
+        <div class="flex items-center space-x-4">
+            <button onclick="previousDay()" class="text-gray-600 hover:text-blue-600 transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="text-gray-800 font-medium">第3天</span>
+            <button onclick="nextDay()" class="text-gray-600 hover:text-blue-600 transition-colors">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function previousDay() {
+            // 跳转到第2天
+            window.location.href = 'daily-detail.html?day=2';
+        }
+        
+        function nextDay() {
+            // 跳转到第4天
+            window.location.href = 'daily-detail.html?day=4';
+        }
+        
+        // 获取URL参数中的天数
+        const urlParams = new URLSearchParams(window.location.search);
+        const day = urlParams.get('day') || '3';
+        
+        // 更新页面标题和内容
+        document.title = `第${day}天详情 - 智游助手v6.5`;
+        
+        // 添加滚动动画效果
+        window.addEventListener('scroll', () => {
+            const items = document.querySelectorAll('.timeline-item');
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                }
+            });
+        });
+        
+        // 初始化动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const items = document.querySelectorAll('.timeline-item');
+            items.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.5s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

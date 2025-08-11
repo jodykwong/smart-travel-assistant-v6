@@ -1,13 +1,97 @@
 {
-  "timestamp": "2025-08-10T09:40:51.949Z",
+  "timestamp": "2025-08-10T11:51:19.006Z",
   "notebooks": {
     "01_langgraph_architecture.ipynb": {
       "success": true,
-      "executionTime": 53852,
+      "executionTime": 20914,
       "error": null,
       "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_01_langgraph_architecture.ipynb",
       "cellsExecuted": 18,
       "warnings": []
+    },
+    "02_amap_integration.ipynb": {
+      "success": true,
+      "executionTime": 22778,
+      "error": null,
+      "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_02_amap_integration.ipynb",
+      "cellsExecuted": 14,
+      "warnings": []
+    },
+    "03_intelligent_planning.ipynb": {
+      "success": true,
+      "executionTime": 67047,
+      "error": null,
+      "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_03_intelligent_planning.ipynb",
+      "cellsExecuted": 12,
+      "warnings": []
+    },
+    "04_complete_integration_test.ipynb": {
+      "success": true,
+      "executionTime": 19037,
+      "error": null,
+      "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_04_complete_integration_test.ipynb",
+      "cellsExecuted": 8,
+      "warnings": []
     }
+  },
+  "environment": {
+    "jupyterAvailable": true,
+    "jupyterVersion": "Selected Jupyter core packages...\nIPython          : 8.37.0\nipykernel        : 6.30.0\nipywidgets       : 8.1.7\njupyter_client   : 8.6.3\njupyter_core     : 5.8.1\njupyter_server   : 2.16.0\njupyterlab       : 4.4.5\nnbclient         : 0.10.2\nnbconvert        : 7.16.6\nnbformat         : 5.10.4\nnotebook         : 7.4.4\nqtconsole        : not installed\ntraitlets        : 5.14.3",
+    "nbconvertAvailable": true
+  },
+  "report": {
+    "summary": {
+      "timestamp": "2025-08-10T11:53:44.323Z",
+      "totalNotebooks": 4,
+      "successfulExecutions": 4,
+      "totalExecutionTime": 129776,
+      "averageExecutionTime": 32444
+    },
+    "details": {
+      "01_langgraph_architecture.ipynb": {
+        "success": true,
+        "executionTime": 20914,
+        "error": null,
+        "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_01_langgraph_architecture.ipynb",
+        "cellsExecuted": 18,
+        "warnings": []
+      },
+      "02_amap_integration.ipynb": {
+        "success": true,
+        "executionTime": 22778,
+        "error": null,
+        "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_02_amap_integration.ipynb",
+        "cellsExecuted": 14,
+        "warnings": []
+      },
+      "03_intelligent_planning.ipynb": {
+        "success": true,
+        "executionTime": 67047,
+        "error": null,
+        "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_03_intelligent_planning.ipynb",
+        "cellsExecuted": 12,
+        "warnings": []
+      },
+      "04_complete_integration_test.ipynb": {
+        "success": true,
+        "executionTime": 19037,
+        "error": null,
+        "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_04_complete_integration_test.ipynb",
+        "cellsExecuted": 8,
+        "warnings": []
+      }
+    },
+    "performance": {
+      "fastest": {
+        "name": "04_complete_integration_test.ipynb",
+        "time": 19037
+      },
+      "slowest": {
+        "name": "03_intelligent_planning.ipynb",
+        "time": 67047
+      },
+      "totalTime": 129776
+    },
+    "recommendations": []
   }
 }

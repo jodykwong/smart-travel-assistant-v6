@@ -1,15 +1,15 @@
 {
   "summary": {
-    "timestamp": "2025-08-10T09:42:00.646Z",
+    "timestamp": "2025-08-10T11:53:44.323Z",
     "totalNotebooks": 4,
     "successfulExecutions": 4,
-    "totalExecutionTime": 287576,
-    "averageExecutionTime": 71894
+    "totalExecutionTime": 129776,
+    "averageExecutionTime": 32444
   },
   "details": {
     "01_langgraph_architecture.ipynb": {
       "success": true,
-      "executionTime": 84564,
+      "executionTime": 20914,
       "error": null,
       "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_01_langgraph_architecture.ipynb",
       "cellsExecuted": 18,
@@ -17,7 +17,7 @@
     },
     "02_amap_integration.ipynb": {
       "success": true,
-      "executionTime": 42344,
+      "executionTime": 22778,
       "error": null,
       "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_02_amap_integration.ipynb",
       "cellsExecuted": 14,
@@ -25,7 +25,7 @@
     },
     "03_intelligent_planning.ipynb": {
       "success": true,
-      "executionTime": 102396,
+      "executionTime": 67047,
       "error": null,
       "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_03_intelligent_planning.ipynb",
       "cellsExecuted": 12,
@@ -33,7 +33,7 @@
     },
     "04_complete_integration_test.ipynb": {
       "success": true,
-      "executionTime": 58272,
+      "executionTime": 19037,
       "error": null,
       "outputPath": "/Users/jodykwong/Documents/augment-projects/smart-travel-assistant-augment-v6.5/test-results/executed_04_complete_integration_test.ipynb",
       "cellsExecuted": 8,
@@ -42,14 +42,14 @@
   },
   "performance": {
     "fastest": {
-      "name": "02_amap_integration.ipynb",
-      "time": 42344
+      "name": "04_complete_integration_test.ipynb",
+      "time": 19037
     },
     "slowest": {
       "name": "03_intelligent_planning.ipynb",
-      "time": 102396
+      "time": 67047
     },
-    "totalTime": 287576
+    "totalTime": 129776
   },
   "recommendations": []
 }

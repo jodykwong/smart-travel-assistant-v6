@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 智游助手API测试 - 高德API故障诊断</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 4px; white-space: pre-wrap; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #080; }
+        button { padding: 10px 20px; margin: 5px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a87; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 智游助手API测试</h1>
+        
+        <div class="test-section">
+            <h2>测试智能默认数据API</h2>
+            <p>测试目的地：<strong>哈尔滨</strong></p>
+            <button onclick="testIntelligentDefaultData()">测试智能默认数据</button>
+            <div id="intelligent-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>测试完整旅行数据API</h2>
+            <p>测试目的地：<strong>哈尔滨</strong></p>
+            <button onclick="testTravelData()">测试完整数据</button>
+            <div id="travel-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testIntelligentDefaultData() {
+            const resultDiv = document.getElementById('intelligent-result');
+            resultDiv.textContent = '🔄 正在测试智能默认数据API...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('/api/intelligent-default-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destination: '哈尔滨' }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                resultDiv.textContent = `✅ 成功！\n\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+                
+                // 特别检查美食数据
+                if (data.data && data.data.food) {
+                    console.log('🍽️ 美食数据:', data.data.food);
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 失败：${error.message}`;
+                resultDiv.className = 'result error';
+                console.error('API测试失败:', error);
+            }
+        }
+
+        async function testTravelData() {
+            const resultDiv = document.getElementById('travel-result');
+            resultDiv.textContent = '🔄 正在测试完整旅行数据API...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('/api/travel-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destination: '哈尔滨' }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                resultDiv.textContent = `✅ 成功！\n\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+                
+                // 特别检查美食数据
+                if (data.food && data.food.data) {
+                    console.log('🍽️ 美食数据:', data.food.data);
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 失败：${error.message}`;
+                resultDiv.className = 'result error';
+                console.error('API测试失败:', error);
+            }
+        }
+    </script>
+</body>
+</html>

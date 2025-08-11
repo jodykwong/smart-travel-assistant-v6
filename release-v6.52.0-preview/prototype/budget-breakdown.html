@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>费用明细 - 新疆深度游 | 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .budget-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .budget-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .total-budget {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3);
+            animation: pulse-glow 2s infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3); }
+            100% { box-shadow: 0 20px 45px rgba(16, 185, 129, 0.5); }
+        }
+        
+        .category-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        .cost-breakdown-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .cost-breakdown-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateX(5px);
+        }
+        
+        .savings-tip {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #6366f1 0deg 173deg,
+                #10b981 173deg 259deg,
+                #f59e0b 259deg 302deg,
+                #ef4444 302deg 331deg,
+                #8b5cf6 331deg 360deg
+            );
+            position: relative;
+        }
+        
+        .pie-chart::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .chart-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="glass sticky top-0 z-50 p-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-white text-xl font-bold">费用明细</h1>
+                    <p class="text-white/70 text-sm">新疆13天深度游预算分解</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="max-w-6xl mx-auto p-6">
+        <!-- 总预算显示 - 修复费用显示错误 -->
+        <div class="total-budget mb-8">
+            <div class="text-sm opacity-90 mb-2">总预算 (2人)</div>
+            <div class="text-5xl font-bold mb-2">¥20,500</div>
+            <div class="text-lg opacity-90">13天新疆深度游</div>
+            <div class="mt-4 text-sm">
+                <span class="bg-white/20 px-3 py-1 rounded-full">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    已修复费用显示问题
+                </span>
+            </div>
+        </div>
+
+        <!-- 费用分类概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="category-card" onclick="showDetails('rv')">
+                <div class="flex items-center justify-between mb-3">
+                    <i class="fas fa-car text-2xl text-blue-600"></i>
+                    <span class="text-2xl font-bold text-blue-600">¥12,000</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">RV租赁+油费</h3>
+                <div class="progress-bar mb-2">
+                    <div class="progress-fill bg-blue-500" style="width: 58.5%"></div>
+                </div>
+                <p class="text-sm text-gray-600">含保险、异地还车费</p>
+            </div>
+
+            <div class="category-card" onclick="showDetails('dining')">
+                <div class="flex items-center justify-between mb-3">
+                    <i class="fas fa-utensils text-2xl text-green-600"></i>
+                    <span class="text-2xl font-bold text-green-600">¥3,000</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">餐饮</h3>
+                <div class="progress-bar mb-2">
+                    <div class="progress-fill bg-green-500" style="width: 14.6%"></div>
+                </div>
+                <p class="text-sm text-gray-600">含特色餐厅+自炊</p>
+            </div>
+
+            <div class="category-card" onclick="showDetails('tickets')">
+                <div class="flex items-center justify-between mb-3">
+                    <i class="fas fa-ticket-alt text-2xl text-yellow-600"></i>
+                    <span class="text-2xl font-bold text-yellow-600">¥1,500</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">门票/体验</h3>
+                <div class="progress-bar mb-2">
+                    <div class="progress-fill bg-yellow-500" style="width: 7.3%"></div>
+                </div>
+                <p class="text-sm text-gray-600">赛湖、向导等</p>
+            </div>
+
+            <div class="category-card" onclick="showDetails('accommodation')">
+                <div class="flex items-center justify-between mb-3">
+                    <i class="fas fa-bed text-2xl text-red-600"></i>
+                    <span class="text-2xl font-bold text-red-600">¥2,000</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">住宿</h3>
+                <div class="progress-bar mb-2">
+                    <div class="progress-fill bg-red-500" style="width: 9.8%"></div>
+                </div>
+                <p class="text-sm text-gray-600">营地+野营</p>
+            </div>
+
+            <div class="category-card" onclick="showDetails('other')">
+                <div class="flex items-center justify-between mb-3">
+                    <i class="fas fa-shopping-bag text-2xl text-purple-600"></i>
+                    <span class="text-2xl font-bold text-purple-600">¥2,000</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">其他</h3>
+                <div class="progress-bar mb-2">
+                    <div class="progress-fill bg-purple-500" style="width: 9.8%"></div>
+                </div>
+                <p class="text-sm text-gray-600">物资、备用金</p>
+            </div>
+        </div>
+
+        <!-- 费用分布图表和详细分解 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 费用分布图 -->
+            <div class="budget-card">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">费用分布</h3>
+                <div class="chart-container">
+                    <div class="pie-chart">
+                        <div class="chart-label">
+                            <div class="text-lg font-bold text-gray-800">¥20,500</div>
+                            <div class="text-sm text-gray-600">总预算</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                        <span class="text-sm">RV租赁 58.5%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                        <span class="text-sm">餐饮 14.6%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                        <span class="text-sm">住宿 9.8%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+                        <span class="text-sm">其他 9.8%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细费用分解 -->
+            <div class="budget-card">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">详细分解</h3>
+                <div id="cost-details">
+                    <div class="cost-breakdown-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800">RV租赁费用</span>
+                            <span class="font-bold text-blue-600">¥8,000</span>
+                        </div>
+                        <p class="text-sm text-gray-600">四驱B型房车 13天租赁</p>
+                    </div>
+                    
+                    <div class="cost-breakdown-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800">油费</span>
+                            <span class="font-bold text-blue-600">¥2,500</span>
+                        </div>
+                        <p class="text-sm text-gray-600">约2000公里行程油费</p>
+                    </div>
+                    
+                    <div class="cost-breakdown-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800">异地还车费</span>
+                            <span class="font-bold text-blue-600">¥1,500</span>
+                        </div>
+                        <p class="text-sm text-gray-600">伊宁机场还车费用</p>
+                    </div>
+                    
+                    <div class="cost-breakdown-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800">特色餐厅</span>
+                            <span class="font-bold text-green-600">¥1,800</span>
+                        </div>
+                        <p class="text-sm text-gray-600">大盘鸡、手抓饭等</p>
+                    </div>
+                    
+                    <div class="cost-breakdown-item">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800">自炊食材</span>
+                            <span class="font-bold text-green-600">¥1,200</span>
+                        </div>
+                        <p class="text-sm text-gray-600">馕、干果、车载食材</p>
+                    </div>
+                </div>
+                
+                <div class="savings-tip">
+                    <h4 class="font-bold mb-2">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        省钱小贴士
+                    </h4>
+                    <ul class="text-sm space-y-1">
+                        <li>• 提前3个月预订RV可享受早鸟优惠</li>
+                        <li>• 自炊比例提高可节省30%餐饮费用</li>
+                        <li>• 选择免费景点可减少门票支出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 弹性预算说明 -->
+        <div class="glass rounded-2xl p-6 mt-8 text-white">
+            <h3 class="text-xl font-bold mb-4">
+                <i class="fas fa-chart-line text-green-400 mr-2"></i>
+                弹性预算空间
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-400">¥5,000</div>
+                    <div class="text-sm opacity-80">预留弹性空间</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-400">¥25,500</div>
+                    <div class="text-sm opacity-80">最大预算上限</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-400">¥18,000</div>
+                    <div class="text-sm opacity-80">最低预算下限</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDetails(category) {
+            const details = {
+                rv: [
+                    { name: 'RV租赁费用', amount: '¥8,000', desc: '四驱B型房车 13天租赁' },
+                    { name: '油费', amount: '¥2,500', desc: '约2000公里行程油费' },
+                    { name: '异地还车费', amount: '¥1,500', desc: '伊宁机场还车费用' }
+                ],
+                dining: [
+                    { name: '特色餐厅', amount: '¥1,800', desc: '大盘鸡、手抓饭等' },
+                    { name: '自炊食材', amount: '¥1,200', desc: '馕、干果、车载食材' }
+                ],
+                tickets: [
+                    { name: '赛里木湖门票', amount: '¥290', desc: '门票+自驾145元/人' },
+                    { name: '向导费用', amount: '¥600', desc: '孟克特户外团队' },
+                    { name: '其他门票', amount: '¥610', desc: '独山子大峡谷等' }
+                ],
+                accommodation: [
+                    { name: '房车营地', amount: '¥1,200', desc: '带电桩营地费用' },
+                    { name: '野营费用', amount: '¥800', desc: '牧民草地费等' }
+                ],
+                other: [
+                    { name: '物资采购', amount: '¥800', desc: '煤气罐、装备等' },
+                    { name: '备用金', amount: '¥1,200', desc: '应急费用' }
+                ]
+            };
+            
+            const detailsContainer = document.getElementById('cost-details');
+            detailsContainer.innerHTML = '';
+            
+            details[category].forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'cost-breakdown-item';
+                div.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold text-gray-800">${item.name}</span>
+                        <span class="font-bold text-blue-600">${item.amount}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">${item.desc}</p>
+                `;
+                detailsContainer.appendChild(div);
+            });
+        }
+        
+        // 初始化进度条动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新疆深度游 - 行程概览 | 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .day-card {
+            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .budget-highlight {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .day-gradient {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+        
+        .activity-tag {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="glass sticky top-0 z-50 p-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <h1 class="text-white text-xl font-bold">
+                    <i class="fas fa-compass mr-2"></i>
+                    智游助手v6.5
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <button class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-download mr-2"></i>
+                    导出行程
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- 行程标题区域 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">
+                新疆深度游
+                <span class="text-yellow-300">✨</span>
+            </h1>
+            <p class="text-white/90 text-lg mb-6">
+                13天深度探险与文化之旅 · 避开常规景点 · RV自驾体验
+            </p>
+            
+            <!-- 修复后的费用显示 -->
+            <div class="budget-highlight inline-block px-8 py-4 rounded-2xl mb-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold mb-1">¥20,500</div>
+                    <div class="text-sm opacity-90">总预算 (2人)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计概览卡片 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <div class="text-3xl font-bold text-blue-600 mb-2">13</div>
+                <div class="text-gray-600 font-medium">总天数</div>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <div class="text-3xl font-bold text-green-600 mb-2">49</div>
+                <div class="text-gray-600 font-medium">精选活动</div>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <div class="text-3xl font-bold text-purple-600 mb-2">2</div>
+                <div class="text-gray-600 font-medium">出行人数</div>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <div class="text-3xl font-bold text-orange-600 mb-2">80%</div>
+                <div class="text-gray-600 font-medium">非铺装路面</div>
+            </div>
+        </div>
+
+        <!-- 行程亮点 -->
+        <div class="glass rounded-2xl p-6 mb-8">
+            <h3 class="text-white text-xl font-bold mb-4">
+                <i class="fas fa-star text-yellow-400 mr-2"></i>
+                行程亮点
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="activity-tag text-center">
+                    <i class="fas fa-car mb-2 block"></i>
+                    RV自驾探险
+                </div>
+                <div class="activity-tag text-center">
+                    <i class="fas fa-users mb-2 block"></i>
+                    哈萨克族家访
+                </div>
+                <div class="activity-tag text-center">
+                    <i class="fas fa-campground mb-2 block"></i>
+                    野奢露营
+                </div>
+                <div class="activity-tag text-center">
+                    <i class="fas fa-mountain mb-2 block"></i>
+                    边境牧场体验
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速导航 -->
+        <div class="glass rounded-2xl p-6 mb-8">
+            <h3 class="text-white text-xl font-bold mb-4">
+                <i class="fas fa-map-marked-alt text-blue-400 mr-2"></i>
+                快速导航
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="scrollToDay(1)" class="bg-white/20 text-white p-3 rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-calendar-day mr-2"></i>
+                    第1-3天
+                </button>
+                <button onclick="scrollToDay(4)" class="bg-white/20 text-white p-3 rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-calendar-day mr-2"></i>
+                    第4-6天
+                </button>
+                <button onclick="scrollToDay(7)" class="bg-white/20 text-white p-3 rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-calendar-day mr-2"></i>
+                    第7-9天
+                </button>
+                <button onclick="scrollToDay(10)" class="bg-white/20 text-white p-3 rounded-lg hover:bg-white/30 transition-colors">
+                    <i class="fas fa-calendar-day mr-2"></i>
+                    第10-13天
+                </button>
+            </div>
+        </div>
+
+        <!-- 每日行程概览 -->
+        <div class="space-y-6">
+            <h2 class="text-white text-2xl font-bold mb-6">
+                <i class="fas fa-route text-green-400 mr-2"></i>
+                每日行程概览
+            </h2>
+            
+            <!-- 第1-3天 -->
+            <div id="day-1" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(1)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第1天</div>
+                        <div class="text-gray-500 text-sm">多云 24°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">新疆13天深度探险规划</h4>
+                    <p class="text-gray-600 text-sm mb-4">定制新疆深度探险与文化之旅，避开常规景点，聚焦原生态风光和RV自驾体验</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">1个活动</span>
+                        <span class="text-green-600 font-bold">¥52</span>
+                    </div>
+                </div>
+
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(2)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第2天</div>
+                        <div class="text-gray-500 text-sm">阴天 26°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">路线规划 & RV租赁</h4>
+                    <p class="text-gray-600 text-sm mb-4">乌鲁木齐→独库公路→赛里木湖→孟克特古道→伊犁河谷路线，四驱B型房车租赁</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">3个活动</span>
+                        <span class="text-green-600 font-bold">¥1,071</span>
+                    </div>
+                </div>
+
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(3)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第3天</div>
+                        <div class="text-gray-500 text-sm">晴朗 25°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">乌鲁木齐出发</h4>
+                    <p class="text-gray-600 text-sm mb-4">抵达乌鲁木齐，办理RV租赁手续，采购物资，参观新疆博物馆，房车露营地</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">4个活动</span>
+                        <span class="text-green-600 font-bold">¥318</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第4-6天 -->
+            <div id="day-4" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(4)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第4天</div>
+                        <div class="text-gray-500 text-sm">多云 22°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">独库公路北段</h4>
+                    <p class="text-gray-600 text-sm mb-4">乌鲁木齐出发，沿独库公路北段前行，体验壮美山川风光</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">3个活动</span>
+                        <span class="text-green-600 font-bold">¥280</span>
+                    </div>
+                </div>
+
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(5)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第5天</div>
+                        <div class="text-gray-500 text-sm">阴天 24°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">赛里木湖</h4>
+                    <p class="text-gray-600 text-sm mb-4">抵达赛里木湖，环湖自驾，体验高山湖泊的纯净之美</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">4个活动</span>
+                        <span class="text-green-600 font-bold">¥350</span>
+                    </div>
+                </div>
+
+                <div class="day-card rounded-2xl p-6 card-hover" onclick="openDayDetail(6)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="day-gradient text-white px-3 py-1 rounded-full text-sm font-bold">第6天</div>
+                        <div class="text-gray-500 text-sm">晴朗 26°C</div>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">孟克特古道</h4>
+                    <p class="text-gray-600 text-sm mb-4">探索孟克特古道，体验哈萨克族牧民生活，边境风光</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">3个活动</span>
+                        <span class="text-green-600 font-bold">¥420</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 查看更多按钮 -->
+            <div class="text-center mt-8">
+                <button onclick="showAllDays()" class="bg-white/20 text-white px-8 py-3 rounded-xl hover:bg-white/30 transition-colors">
+                    <i class="fas fa-chevron-down mr-2"></i>
+                    查看完整13天行程
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function scrollToDay(day) {
+            document.getElementById(`day-${day}`).scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+        
+        function openDayDetail(day) {
+            window.open(`daily-detail.html?day=${day}`, '_blank');
+        }
+        
+        function showAllDays() {
+            // 这里可以展开显示所有13天的行程
+            alert('展开显示所有13天行程功能');
+        }
+        
+        // 添加滚动动画效果
+        window.addEventListener('scroll', () => {
+            const cards = document.querySelectorAll('.day-card');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

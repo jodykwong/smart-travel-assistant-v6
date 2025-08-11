@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航索引 - 新疆深度游 | 智游助手v6.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .nav-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 16px 50px 16px 20px;
+            border-radius: 50px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            font-size: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-button:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .day-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .day-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        }
+        
+        .day-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .activity-count {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .cost-badge {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .quick-access {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .quick-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .filter-tab.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        
+        .filter-tab:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .filter-tab.active:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+        
+        .floating-summary {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="glass sticky top-0 z-50 p-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="history.back()" class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-white text-xl font-bold">导航索引</h1>
+                    <p class="text-white/70 text-sm">快速跳转到任意天数或活动</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-bookmark"></i>
+                </button>
+                <button class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- 搜索功能 -->
+        <div class="search-container mb-8">
+            <input type="text" 
+                   class="search-input" 
+                   placeholder="搜索活动、地点或关键词..."
+                   id="searchInput"
+                   onkeyup="searchActivities(event)">
+            <button class="search-button" onclick="performSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+
+        <!-- 快速访问 -->
+        <div class="quick-access">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-rocket text-blue-600 mr-2"></i>
+                快速访问
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="quick-button" onclick="window.open('overview.html', '_blank')">
+                    <i class="fas fa-map-marked-alt"></i>
+                    行程概览
+                </button>
+                <button class="quick-button" onclick="window.open('budget-breakdown.html', '_blank')">
+                    <i class="fas fa-calculator"></i>
+                    费用明细
+                </button>
+                <button class="quick-button" onclick="scrollToDay(1)">
+                    <i class="fas fa-play"></i>
+                    第1天
+                </button>
+                <button class="quick-button" onclick="scrollToDay(13)">
+                    <i class="fas fa-flag-checkered"></i>
+                    最后一天
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选标签 -->
+        <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterByType('all')">全部</div>
+            <div class="filter-tab" onclick="filterByType('transport')">交通</div>
+            <div class="filter-tab" onclick="filterByType('culture')">文化</div>
+            <div class="filter-tab" onclick="filterByType('accommodation')">住宿</div>
+            <div class="filter-tab" onclick="filterByType('dining')">餐饮</div>
+            <div class="filter-tab" onclick="filterByType('adventure')">探险</div>
+        </div>
+
+        <!-- 13天行程导航 -->
+        <div class="day-grid" id="dayGrid">
+            <!-- 第1天 -->
+            <div class="day-card" data-day="1" data-type="planning" onclick="openDayDetail(1)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第1天</div>
+                    <div class="activity-count">1个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">新疆13天深度探险规划</h4>
+                <p class="text-gray-600 text-sm mb-3">定制新疆深度探险与文化之旅，避开常规景点，聚焦原生态风光</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">多云 24°C</span>
+                    <div class="cost-badge">¥52</div>
+                </div>
+            </div>
+
+            <!-- 第2天 -->
+            <div class="day-card" data-day="2" data-type="transport" onclick="openDayDetail(2)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第2天</div>
+                    <div class="activity-count">3个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">路线规划 & RV租赁</h4>
+                <p class="text-gray-600 text-sm mb-3">乌鲁木齐→独库公路→赛里木湖→孟克特古道→伊犁河谷路线</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">阴天 26°C</span>
+                    <div class="cost-badge">¥1,071</div>
+                </div>
+            </div>
+
+            <!-- 第3天 -->
+            <div class="day-card" data-day="3" data-type="culture" onclick="openDayDetail(3)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第3天</div>
+                    <div class="activity-count">4个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">乌鲁木齐出发</h4>
+                <p class="text-gray-600 text-sm mb-3">抵达乌鲁木齐，RV租赁手续，采购物资，新疆博物馆，房车露营地</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">晴朗 25°C</span>
+                    <div class="cost-badge">¥318</div>
+                </div>
+            </div>
+
+            <!-- 第4天 -->
+            <div class="day-card" data-day="4" data-type="dining" onclick="openDayDetail(4)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第4天</div>
+                    <div class="activity-count">2个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">美食体验</h4>
+                <p class="text-gray-600 text-sm mb-3">海尔巴格餐饮、血站大盘鸡</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">多云 22°C</span>
+                    <div class="cost-badge">¥137</div>
+                </div>
+            </div>
+
+            <!-- 第5天 -->
+            <div class="day-card" data-day="5" data-type="adventure" onclick="openDayDetail(5)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第5天</div>
+                    <div class="activity-count">5个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">非铺装路面探险</h4>
+                <p class="text-gray-600 text-sm mb-3">康家石门子岩画、鹿角湾牧场</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">阴天 24°C</span>
+                    <div class="cost-badge">¥309</div>
+                </div>
+            </div>
+
+            <!-- 第6天 -->
+            <div class="day-card" data-day="6" data-type="transport" onclick="openDayDetail(6)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第6天</div>
+                    <div class="activity-count">2个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">出发准备</h4>
+                <p class="text-gray-600 text-sm mb-3">下载离线地图、富蕴县城加油</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">晴朗 26°C</span>
+                    <div class="cost-badge">¥121</div>
+                </div>
+            </div>
+
+            <!-- 第7-13天的卡片继续... -->
+            <div class="day-card" data-day="7" data-type="adventure" onclick="openDayDetail(7)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第7天</div>
+                    <div class="activity-count">4个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">深度探险</h4>
+                <p class="text-gray-600 text-sm mb-3">继续新疆深度探险之旅</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">多云 23°C</span>
+                    <div class="cost-badge">¥280</div>
+                </div>
+            </div>
+
+            <!-- 更多天数... -->
+            <div class="day-card" data-day="13" data-type="transport" onclick="openDayDetail(13)">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-lg font-bold text-gray-800">第13天</div>
+                    <div class="activity-count">3个活动</div>
+                </div>
+                <h4 class="font-bold text-gray-800 mb-2">返程</h4>
+                <p class="text-gray-600 text-sm mb-3">结束新疆深度游，返程</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500 text-sm">晴朗 27°C</span>
+                    <div class="cost-badge">¥200</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动摘要 -->
+    <div class="floating-summary">
+        <div class="text-sm font-bold text-gray-800 mb-2">行程摘要</div>
+        <div class="text-xs text-gray-600">
+            <div>总天数: 13天</div>
+            <div>总活动: 49个</div>
+            <div>总预算: ¥20,500</div>
+        </div>
+    </div>
+
+    <script>
+        function openDayDetail(day) {
+            window.open(`daily-detail.html?day=${day}`, '_blank');
+        }
+        
+        function scrollToDay(day) {
+            const dayCard = document.querySelector(`[data-day="${day}"]`);
+            if (dayCard) {
+                dayCard.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                // 添加高亮效果
+                dayCard.style.transform = 'scale(1.05)';
+                dayCard.style.boxShadow = '0 15px 40px rgba(102, 126, 234, 0.3)';
+                setTimeout(() => {
+                    dayCard.style.transform = '';
+                    dayCard.style.boxShadow = '';
+                }, 1000);
+            }
+        }
+        
+        function filterByType(type) {
+            const cards = document.querySelectorAll('.day-card');
+            const tabs = document.querySelectorAll('.filter-tab');
+            
+            // 更新标签状态
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 筛选卡片
+            cards.forEach(card => {
+                if (type === 'all' || card.dataset.type === type) {
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.opacity = '0.3';
+                }
+            });
+        }
+        
+        function searchActivities(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+        
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.day-card');
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm) || searchTerm === '') {
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.opacity = '0.3';
+                }
+            });
+            
+            // 如果搜索到结果，滚动到第一个匹配项
+            const firstMatch = Array.from(cards).find(card => 
+                card.textContent.toLowerCase().includes(searchTerm) && searchTerm !== ''
+            );
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+        
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey || event.metaKey) {
+                switch(event.key) {
+                    case 'f':
+                        event.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                    case '1':
+                        event.preventDefault();
+                        scrollToDay(1);
+                        break;
+                    case '0':
+                        event.preventDefault();
+                        scrollToDay(13);
+                        break;
+                }
+            }
+        });
+        
+        // 初始化动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.day-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

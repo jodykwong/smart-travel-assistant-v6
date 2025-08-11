@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智游助手v6.0 - 高保真原型预览</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'glass': 'rgba(255, 255, 255, 0.1)',
+                        'glass-dark': 'rgba(0, 0, 0, 0.1)',
+                        'primary': '#6366f1',
+                        'secondary': '#8b5cf6',
+                        'accent': '#06b6d4',
+                        'success': '#10b981',
+                        'warning': '#f59e0b',
+                        'danger': '#ef4444'
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                        'sm': '4px',
+                        'md': '8px',
+                        'lg': '12px',
+                        'xl': '16px',
+                        '2xl': '24px',
+                        '3xl': '40px'
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        'glass-inset': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+                        'neumorphism': '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
+                        'float': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        'glow': '0 0 20px rgba(99, 102, 241, 0.5)'
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slide-up 0.5s ease-out',
+                        'fade-in': 'fade-in 0.6s ease-out',
+                        'scale-in': 'scale-in 0.3s ease-out'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-white to-cyan-50 min-h-screen">
+    <!-- 原型预览容器 -->
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <!-- iPhone 15 Pro 模拟器 -->
+        <div class="relative">
+            <!-- 手机外壳 -->
+            <div class="w-[415px] h-[896px] bg-black rounded-[60px] p-2 shadow-2xl">
+                <!-- 屏幕区域 -->
+                <div class="w-full h-full bg-white rounded-[50px] overflow-hidden relative">
+                    <!-- 动态岛 -->
+                    <div class="absolute top-2 left-1/2 transform -translate-x-1/2 w-32 h-8 bg-black rounded-full z-50"></div>
+                    
+                    <!-- 页面内容iframe -->
+                    <iframe 
+                        src="travel-result.html" 
+                        class="w-full h-full border-none"
+                        frameborder="0">
+                    </iframe>
+                </div>
+            </div>
+            
+            <!-- 手机按键 -->
+            <div class="absolute -right-1 top-32 w-1 h-16 bg-gray-800 rounded-l"></div>
+            <div class="absolute -right-1 top-52 w-1 h-12 bg-gray-800 rounded-l"></div>
+            <div class="absolute -right-1 top-68 w-1 h-12 bg-gray-800 rounded-l"></div>
+            <div class="absolute -left-1 top-40 w-1 h-8 bg-gray-800 rounded-r"></div>
+        </div>
+    </div>
+
+    <!-- 预览控制面板 -->
+    <div class="fixed bottom-4 left-4 bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-glass">
+        <h3 class="text-sm font-semibold text-gray-800 mb-2">原型预览</h3>
+        <div class="flex gap-2">
+            <button onclick="switchPage('travel-result.html')" 
+                    class="px-3 py-1 bg-primary text-white rounded-lg text-xs hover:bg-primary/80 transition-colors">
+                旅行结果页
+            </button>
+            <button onclick="switchPage('travel-detail.html')" 
+                    class="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-300 transition-colors">
+                详情页
+            </button>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
